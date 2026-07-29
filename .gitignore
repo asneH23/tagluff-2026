@@ -1,0 +1,15 @@
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Environment
+.env
+.env.local
+
+# macOS
+.DS_Store
+
+# Node (if added later)
+node_modules/

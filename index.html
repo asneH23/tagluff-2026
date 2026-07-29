@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="theme-color" content="#FAFAF8" />
+  <title>Tågluff 2026 🚂</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box; margin: 0; padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    :root {
+      --bg: #FAFAF8; --surface: #FFFFFF; --border: #EBEBEB;
+      --primary: #111110; --accent: #C8963C; --accent-light: #FEF4E0;
+      --text: #111110; --text-2: #6B6B6B; --text-3: #ABABAB;
+      --green: #22C55E; --red: #EF4444;
+      --r: 16px; --r-sm: 10px;
+      --font: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --safe-t: env(safe-area-inset-top, 20px);
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --nav-h: calc(64px + var(--safe-b));
+    }
+    html, body { height: 100%; width: 100%; font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; -webkit-font-smoothing: antialiased; }
+    #app { display: flex; flex-direction: column; height: 100%; max-width: 430px; margin: 0 auto; position: relative; }
+    .screen { display: none; flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding-bottom: calc(var(--nav-h) + 24px); }
+    .screen.active { display: block; }
+    .topbar { padding: calc(var(--safe-t) + 12px) 20px 14px; background: var(--bg); position: sticky; top: 0; z-index: 20; }
+    .topbar h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.6px; line-height: 1.1; }
+    .topbar .sub { font-size: 13px; color: var(--text-2); margin-top: 2px; font-weight: 400; }
+    .sec-label { font-size: 11px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: 1px; margin: 24px 20px 10px; }
+    .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: rgba(255,255,255,0.96); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-top: 1px solid var(--border); display: flex; padding: 8px 0 calc(8px + var(--safe-b)); z-index: 100; }
+    .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; background: none; border: none; cursor: pointer; transition: transform 0.12s ease; }
+    .nav-btn:active { transform: scale(0.88); }
+    .nav-icon { font-size: 22px; line-height: 1; }
+    .nav-label { font-size: 10px; font-weight: 600; color: var(--text-3); font-family: var(--font); transition: color 0.15s; }
+    .nav-btn.active .nav-label { color: var(--accent); }
+    .fab { position: fixed; bottom: calc(var(--nav-h) + 16px); right: max(16px, calc((100vw - 430px) / 2 + 16px)); width: 52px; height: 52px; border-radius: 50%; background: var(--primary); color: white; font-size: 26px; font-weight: 300; border: none; cursor: pointer; display: none; align-items: center; justify-content: center; box-shadow: 0 6px 24px rgba(0,0,0,0.22); z-index: 90; transition: transform 0.12s ease; }
+    .fab:active { transform: scale(0.90); }
+    .hero { margin: 0 20px; background: var(--primary); color: white; border-radius: 20px; padding: 24px; position: relative; overflow: hidden; }
+    .hero::after { content: '🚂'; font-size: 96px; position: absolute; right: -16px; bottom: -16px; opacity: 0.12; line-height: 1; pointer-events: none; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.12); border-radius: 20px; padding: 4px 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 14px; }
+    .hero-count { font-size: 64px; font-weight: 700; line-height: 1; letter-spacing: -3px; }
+    .hero-sub { font-size: 14px; opacity: 0.65; margin-top: 4px; font-weight: 400; }
+    .hero-dates { margin-top: 18px; font-size: 15px; font-weight: 600; opacity: 0.9; display: flex; align-items: center; gap: 8px; }
+    .hero-dates-sep { width: 24px; height: 1px; background: rgba(255,255,255,0.3); }
+    .crew-scroll { display: flex; gap: 14px; overflow-x: auto; padding: 0 20px 4px; -ms-overflow-style: none; scrollbar-width: none; }
+    .crew-scroll::-webkit-scrollbar { display: none; }
+    .crew-item { display: flex; flex-direction: column; align-items: center; gap: 7px; min-width: 58px; }
+    .crew-avatar { width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: white; }
+    .crew-name { font-size: 11px; font-weight: 500; color: var(--text-2); text-align: center; line-height: 1.2; }
+    .crew-tag { font-size: 9px; font-weight: 700; background: var(--accent-light); color: var(--accent); border-radius: 20px; padding: 2px 7px; letter-spacing: 0.3px; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px; }
+    .stat-card { background: var(--surface); border-radius: var(--r-sm); padding: 16px; border: 1px solid var(--border); }
+    .stat-val { font-size: 32px; font-weight: 700; letter-spacing: -1.5px; line-height: 1; }
+    .stat-lbl { font-size: 12px; color: var(--text-2); margin-top: 3px; font-weight: 400; }
+    .export-bar { margin: 16px 20px 0; background: var(--accent-light); border-radius: var(--r-sm); padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+    .export-bar-icon { font-size: 20px; }
+    .export-bar-text { flex: 1; }
+    .export-bar-title { font-size: 13px; font-weight: 600; color: var(--accent); }
+    .export-bar-sub { font-size: 11px; color: var(--text-2); margin-top: 1px; }
+    .export-bar-btns { display: flex; gap: 8px; }
+    .xbtn { padding: 7px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; border: none; cursor: pointer; font-family: var(--font); transition: opacity 0.15s; }
+    .xbtn:active { opacity: 0.7; }
+    .xbtn-primary { background: var(--accent); color: white; }
+    .xbtn-outline { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+    #map { height: 320px; width: 100%; }
+    .stop-chip { display: flex; align-items: center; gap: 12px; background: var(--surface); border-radius: var(--r-sm); padding: 14px 16px; margin: 0 20px 10px; border: 1px solid var(--border); }
+    .stop-chip-icon { font-size: 22px; flex-shrink: 0; }
+    .stop-chip-info { flex: 1; min-width: 0; }
+    .stop-chip-name { font-size: 15px; font-weight: 600; }
+    .stop-chip-dates { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+    .stop-chip-del { background: none; border: none; color: var(--text-3); font-size: 18px; cursor: pointer; padding: 6px; flex-shrink: 0; }
+    .stop-chip-del:active { color: var(--red); }
+    .check-item { display: flex; align-items: center; gap: 14px; background: var(--surface); border-radius: var(--r-sm); padding: 14px 16px; margin: 0 20px 8px; border: 1px solid var(--border); cursor: pointer; transition: opacity 0.2s; -webkit-user-select: none; user-select: none; }
+    .check-item.done { opacity: 0.5; }
+    .check-circle { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px; transition: all 0.2s; }
+    .check-item.done .check-circle { background: var(--green); border-color: var(--green); color: white; }
+    .check-item-text { flex: 1; font-size: 15px; font-weight: 400; min-width: 0; }
+    .check-item.done .check-item-text { text-decoration: line-through; }
+    .check-del { background: none; border: none; color: var(--text-3); font-size: 18px; cursor: pointer; padding: 4px 2px; flex-shrink: 0; }
+    .check-del:active { color: var(--red); }
+    .stop-card { background: var(--surface); border-radius: var(--r); margin: 0 20px 16px; border: 1px solid var(--border); overflow: hidden; }
+    .stop-card-head { padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+    .stop-card-city { font-size: 17px; font-weight: 700; }
+    .stop-card-date { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+    .stop-card-emoji { font-size: 26px; }
+    .stop-card-body { padding: 14px 18px 4px; }
+    .activity-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+    .activity-row:last-of-type { border-bottom: none; }
+    .act-emoji { font-size: 18px; flex-shrink: 0; }
+    .act-text { flex: 1; font-size: 14px; min-width: 0; }
+    .act-del { background: none; border: none; color: var(--text-3); font-size: 16px; cursor: pointer; padding: 4px; flex-shrink: 0; }
+    .act-del:active { color: var(--red); }
+    .act-add-btn { display: flex; align-items: center; gap: 6px; color: var(--accent); background: none; border: none; font-size: 14px; font-weight: 600; cursor: pointer; padding: 10px 0 14px; font-family: var(--font); }
+    .act-add-btn:active { opacity: 0.6; }
+    .empty { text-align: center; padding: 48px 24px; color: var(--text-2); }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .empty-desc { font-size: 14px; line-height: 1.5; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.48); z-index: 200; display: none; align-items: flex-end; justify-content: center; }
+    .overlay.open { display: flex; }
+    .sheet { background: var(--bg); border-radius: 24px 24px 0 0; width: 100%; max-width: 430px; padding: 0 22px calc(22px + var(--safe-b)); max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 14px auto 20px; }
+    .sheet-title { font-size: 20px; font-weight: 700; margin-bottom: 22px; }
+    .form-grp { margin-bottom: 16px; }
+    .form-lbl { display: block; font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .finput { width: 100%; padding: 14px 14px; border: 1.5px solid var(--border); border-radius: var(--r-sm); font-size: 16px; font-family: var(--font); font-weight: 400; background: var(--surface); color: var(--text); outline: none; -webkit-appearance: none; transition: border-color 0.15s; }
+    .finput:focus { border-color: var(--accent); }
+    select.finput { appearance: none; -webkit-appearance: none; }
+    .btn-main { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: var(--r-sm); font-size: 16px; font-weight: 600; font-family: var(--font); cursor: pointer; margin-top: 6px; transition: opacity 0.15s; }
+    .btn-main:active { opacity: 0.75; }
+    .btn-cancel { width: 100%; padding: 14px; background: none; border: none; font-size: 16px; color: var(--text-2); font-family: var(--font); cursor: pointer; margin-top: 6px; }
+    .btn-cancel:active { opacity: 0.6; }
+    .geo-status { font-size: 12px; color: var(--accent); margin-top: 6px; min-height: 16px; }
+    .textarea-data { width: 100%; min-height: 120px; padding: 12px; border: 1.5px solid var(--border); border-radius: var(--r-sm); font-size: 12px; font-family: monospace; background: var(--surface); color: var(--text); resize: none; outline: none; }
+    .textarea-data:focus { border-color: var(--accent); }
+    .progress-bar-wrap { height: 4px; background: var(--border); border-radius: 2px; margin: 4px 20px 0; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.4s ease; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="screen-home" class="screen active">
+    <div class="topbar">
+      <h1>Tågluff 2026 🚂</h1>
+      <p class="sub">Stockholm → Europa</p>
+    </div>
+    <div class="hero">
+      <div class="hero-badge">⏳ Avresa om</div>
+      <div class="hero-count" id="cd-num">–</div>
+      <div class="hero-sub">dagar kvar</div>
+      <div class="hero-dates">
+        <span>2 aug</span>
+        <div class="hero-dates-sep"></div>
+        <span>16 aug</span>
+        <span style="opacity:0.5;font-size:13px;font-weight:400;">· 15 dagar</span>
+      </div>
+    </div>
+    <div class="sec-label">Gänget</div>
+    <div class="crew-scroll">
+      <div class="crew-item">
+        <div class="crew-avatar" style="background:#6366F1;">A</div>
+        <span class="crew-name">Aston</span>
+      </div>
+      <div class="crew-item">
+        <div class="crew-avatar" style="background:#F59E0B;">M</div>
+        <span class="crew-name">Molle</span>
+        <span class="crew-tag">⚽ Gaffer</span>
+      </div>
+      <div class="crew-item">
+        <div class="crew-avatar" style="background:#10B981;">J</div>
+        <span class="crew-name">Jacob</span>
+      </div>
+      <div class="crew-item">
+        <div class="crew-avatar" style="background:#EF4444;">C</div>
+        <span class="crew-name">Cesar</span>
+      </div>
+      <div class="crew-item">
+        <div class="crew-avatar" style="background:#3B82F6;">I</div>
+        <span class="crew-name">Ivar</span>
+      </div>
+    </div>
+    <div class="sec-label" style="margin-top:20px;">Snabbinfo</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-val">15</div>
+        <div class="stat-lbl">Dagar på resande fot</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">5</div>
+        <div class="stat-lbl">Resenärer</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="home-stops">1</div>
+        <div class="stat-lbl">Stopp planerade</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="home-checks">0</div>
+        <div class="stat-lbl">Uppgifter klara</div>
+      </div>
+    </div>
+    <div class="export-bar">
+      <div class="export-bar-icon">🔄</div>
+      <div class="export-bar-text">
+        <div class="export-bar-title">Synka med gänget</div>
+        <div class="export-bar-sub">Dela eller importera data</div>
+      </div>
+      <div class="export-bar-btns">
+        <button class="xbtn xbtn-primary" onclick="openExport()">Dela</button>
+        <button class="xbtn xbtn-outline" onclick="openImport()">Hämta</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-map" class="screen">
+    <div class="topbar">
+      <h1>Rutt 🗺️</h1>
+      <p class="sub" id="map-sub">Tryck + för att lägga till ett stopp</p>
+    </div>
+    <div id="map"></div>
+    <div class="sec-label">Planerade stopp</div>
+    <div id="stops-list"></div>
+  </div>
+
+  <div id="screen-check" class="screen">
+    <div class="topbar">
+      <h1>Checklista ✅</h1>
+      <p class="sub" id="check-sub">Laddar…</p>
+    </div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="check-bar" style="width:0%"></div></div>
+    <div id="checklist"></div>
+  </div>
+
+  <div id="screen-stops" class="screen">
+    <div class="topbar">
+      <h1>Stopp 📍</h1>
+      <p class="sub">Boenden &amp; aktiviteter</p>
+    </div>
+    <div id="stops-detail"></div>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="nav-home" onclick="goTo('home')">
+      <span class="nav-icon">🏠</span><span class="nav-label">Hem</span>
+    </button>
+    <button class="nav-btn" id="nav-map" onclick="goTo('map')">
+      <span class="nav-icon">🗺️</span><span class="nav-label">Karta</span>
+    </button>
+    <button class="nav-btn" id="nav-check" onclick="goTo('check')">
+      <span class="nav-icon">✅</span><span class="nav-label">Lista</span>
+    </button>
+    <button class="nav-btn" id="nav-stops" onclick="goTo('stops')">
+      <span class="nav-icon">📍</span><span class="nav-label">Stopp</span>
+    </button>
+  </nav>
+</div>
+
+<button class="fab" id="fab" onclick="fabAction()">+</button>
+
+<div class="overlay" id="modal-stop">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Lägg till stopp</div>
+    <div class="form-grp">
+      <label class="form-lbl">Stad</label>
+      <input class="finput" id="in-city" placeholder="t.ex. Berlin" autocomplete="off" inputmode="text" />
+      <div class="geo-status" id="geo-status"></div>
+    </div>
+    <div class="form-grp">
+      <label class="form-lbl">Ankomst → Avresa</label>
+      <div class="form-row">
+        <input class="finput" id="in-from" type="date" min="2026-08-02" max="2026-08-16" />
+        <input class="finput" id="in-to" type="date" min="2026-08-02" max="2026-08-16" />
+      </div>
+    </div>
+    <button class="btn-main" id="stop-add-btn" onclick="geocodeAndAdd()">Lägg till stopp</button>
+    <button class="btn-cancel" onclick="closeModal('modal-stop')">Avbryt</button>
+  </div>
+</div>
+
+<div class="overlay" id="modal-check">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Ny uppgift</div>
+    <div class="form-grp">
+      <label class="form-lbl">Uppgift</label>
+      <input class="finput" id="in-check" placeholder="t.ex. Köp Eurail-kort" autocomplete="off" />
+    </div>
+    <div class="form-grp">
+      <label class="form-lbl">Kategori</label>
+      <select class="finput" id="in-cat">
+        <option>Före resan</option>
+        <option>Packlista</option>
+        <option>Under resan</option>
+      </select>
+    </div>
+    <button class="btn-main" onclick="addCheck()">Lägg till</button>
+    <button class="btn-cancel" onclick="closeModal('modal-check')">Avbryt</button>
+  </div>
+</div>
+
+<div class="overlay" id="modal-activity">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Lägg till</div>
+    <div class="form-grp">
+      <label class="form-lbl">Stopp</label>
+      <select class="finput" id="in-act-stop"></select>
+    </div>
+    <div class="form-grp">
+      <label class="form-lbl">Beskrivning</label>
+      <input class="finput" id="in-act-text" placeholder="t.ex. Hostel Mitte, check-in 15:00" autocomplete="off" />
+    </div>
+    <div class="form-grp">
+      <label class="form-lbl">Typ</label>
+      <select class="finput" id="in-act-type">
+        <option value="🏨">🏨  Boende</option>
+        <option value="🍽️">🍽️  Mat &amp; dryck</option>
+        <option value="🎡">🎡  Aktivitet</option>
+        <option value="🚂">🚂  Transport</option>
+        <option value="📸">📸  Sevärdhet</option>
+        <option value="🎵">🎵  Nöje / nattliv</option>
+        <option value="💡">💡  Tips</option>
+      </select>
+    </div>
+    <button class="btn-main" onclick="addActivity()">Lägg till</button>
+    <button class="btn-cancel" onclick="closeModal('modal-activity')">Avbryt</button>
+  </div>
+</div>
+
+<div class="overlay" id="modal-export">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Dela data 🔗</div>
+    <p style="font-size:14px;color:var(--text-2);margin-bottom:16px;line-height:1.5;">Kopiera koden och skicka till gänget. De klistrar in den under "Hämta".</p>
+    <textarea class="textarea-data" id="export-data" readonly></textarea>
+    <button class="btn-main" onclick="copyExport()">Kopiera till urklipp</button>
+    <button class="btn-cancel" onclick="closeModal('modal-export')">Stäng</button>
+  </div>
+</div>
+
+<div class="overlay" id="modal-import">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Hämta data 📥</div>
+    <p style="font-size:14px;color:var(--text-2);margin-bottom:16px;line-height:1.5;">Klistra in koden du fått från en kompis för att synka deras data.</p>
+    <textarea class="textarea-data" id="import-data" placeholder="Klistra in kod här…"></textarea>
+    <button class="btn-main" onclick="doImport()">Importera &amp; synka</button>
+    <button class="btn-cancel" onclick="closeModal('modal-import')">Avbryt</button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const INITIAL_STATE = {
+  stops: [
+    { id: 'sto', city: 'Stockholm', from: '2026-08-02', to: '2026-08-02', lat: 59.3293, lng: 18.0686, activities: [], isHome: true }
+  ],
+  checklist: [
+    { id: 'c1', text: 'Köp Eurail-kort',              cat: 'Före resan', done: false },
+    { id: 'c2', text: 'Ladda ner offline-kartor',     cat: 'Före resan', done: false },
+    { id: 'c3', text: 'Bokningsnummer på ett ställe', cat: 'Före resan', done: false },
+    { id: 'c4', text: 'Kolla EU-sjukkort (EHIC)',     cat: 'Före resan', done: false },
+    { id: 'c5', text: 'Pass',                         cat: 'Packlista',  done: false },
+    { id: 'c6', text: 'Laddare + universaladapter',   cat: 'Packlista',  done: false },
+    { id: 'c7', text: 'Powerbank',                    cat: 'Packlista',  done: false },
+    { id: 'c8', text: 'Regnjacka',                    cat: 'Packlista',  done: false },
+    { id: 'c9', text: 'Kontanter (euro)',              cat: 'Packlista',  done: false },
+  ]
+};
+
+function loadState() {
+  try { const s = localStorage.getItem('tagluff26'); if (s) return JSON.parse(s); } catch(e) {}
+  return JSON.parse(JSON.stringify(INITIAL_STATE));
+}
+function save() { localStorage.setItem('tagluff26', JSON.stringify(state)); }
+
+let state = loadState();
+let mapInst = null;
+let mapLayers = [];
+let currentTab = 'home';
+
+function goTo(tab) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + tab).classList.add('active');
+  document.getElementById('nav-' + tab).classList.add('active');
+  currentTab = tab;
+  const fab = document.getElementById('fab');
+  fab.style.display = tab === 'home' ? 'none' : 'flex';
+  if (tab === 'map')   { setTimeout(initMap, 80); renderMapStops(); }
+  if (tab === 'check') renderChecklist();
+  if (tab === 'stops') renderStopsDetail();
+  if (tab === 'home')  updateHomeStats();
+}
+
+function fabAction() {
+  if (currentTab === 'map')   openModal('modal-stop');
+  if (currentTab === 'check') openModal('modal-check');
+  if (currentTab === 'stops') openActivityModal(null);
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+function initMap() {
+  if (mapInst) { mapInst.invalidateSize(); return; }
+  mapInst = L.map('map', { zoomControl: false, attributionControl: false }).setView([52, 15], 4);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(mapInst);
+}
+
+function renderMapStops() {
+  if (!mapInst) return;
+  mapLayers.forEach(m => { try { mapInst.removeLayer(m); } catch(e){} });
+  mapLayers = [];
+  const pin = (col) => L.divIcon({
+    html: `<div style="width:14px;height:14px;border-radius:50%;background:${col};border:2.5px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3)"></div>`,
+    className:'', iconSize:[14,14], iconAnchor:[7,7]
+  });
+  const coords = [];
+  state.stops.forEach(s => {
+    if (s.lat == null || s.lng == null) return;
+    const col = s.isHome ? '#6366F1' : '#C8963C';
+    const m = L.marker([s.lat, s.lng], { icon: pin(col) }).addTo(mapInst)
+      .bindPopup(`<strong style="font-family:sans-serif">${s.city}</strong><br><span style="font-size:12px;font-family:sans-serif">${fmtDate(s.from)} → ${fmtDate(s.to)}</span>`);
+    mapLayers.push(m); coords.push([s.lat, s.lng]);
+  });
+  if (coords.length > 1) {
+    const line = L.polyline(coords, { color:'#C8963C', weight:2.5, dashArray:'6 7', opacity:0.75 }).addTo(mapInst);
+    mapLayers.push(line);
+    mapInst.fitBounds(line.getBounds(), { padding:[32,32] });
+  }
+  const el = document.getElementById('stops-list');
+  if (!state.stops.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🗺️</div><div class="empty-title">Inga stopp än</div><div class="empty-desc">Tryck + för att lägga till en stad</div></div>';
+    return;
+  }
+  el.innerHTML = state.stops.map(s => `
+    <div class="stop-chip">
+      <span class="stop-chip-icon">${s.isHome ? '🏠' : '📍'}</span>
+      <div class="stop-chip-info">
+        <div class="stop-chip-name">${s.city}</div>
+        <div class="stop-chip-dates">${fmtDate(s.from)} — ${fmtDate(s.to)}</div>
+      </div>
+      ${s.isHome ? '' : `<button class="stop-chip-del" onclick="removeStop('${s.id}')">✕</button>`}
+    </div>
+  `).join('');
+  document.getElementById('map-sub').textContent = state.stops.length + ' stopp planerade';
+}
+
+async function geocodeAndAdd() {
+  const city = document.getElementById('in-city').value.trim();
+  const from = document.getElementById('in-from').value;
+  const to   = document.getElementById('in-to').value;
+  if (!city) { showGeoStatus('⚠️ Ange en stad'); return; }
+  const btn = document.getElementById('stop-add-btn');
+  btn.textContent = 'Söker…'; btn.disabled = true;
+  showGeoStatus('🔍 Söker koordinater…');
+  let lat = null, lng = null;
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`, { headers: {'Accept-Language':'sv'} });
+    const d = await res.json();
+    if (d.length) { lat = parseFloat(d[0].lat); lng = parseFloat(d[0].lon); }
+    showGeoStatus(lat ? '✅ Hittad! Lägger till…' : '⚠️ Hittades ej – läggs till utan karta');
+  } catch(e) {
+    showGeoStatus('⚠️ Offline – läggs till utan kartpin');
+  }
+  state.stops.push({ id: Date.now().toString(), city, from, to, lat, lng, activities: [] });
+  save();
+  btn.textContent = 'Lägg till stopp'; btn.disabled = false;
+  setTimeout(() => {
+    closeModal('modal-stop');
+    document.getElementById('in-city').value = '';
+    document.getElementById('in-from').value = '';
+    document.getElementById('in-to').value   = '';
+    showGeoStatus('');
+    renderMapStops(); updateHomeStats();
+  }, 800);
+}
+
+function showGeoStatus(msg) { document.getElementById('geo-status').textContent = msg; }
+
+function removeStop(id) {
+  state.stops = state.stops.filter(s => s.id !== id);
+  save(); renderMapStops(); renderStopsDetail(); updateHomeStats();
+}
+
+function renderChecklist() {
+  const total = state.checklist.length;
+  const done  = state.checklist.filter(i => i.done).length;
+  const pct   = total ? Math.round(done / total * 100) : 0;
+  document.getElementById('check-sub').textContent = done + ' av ' + total + ' klara';
+  document.getElementById('check-bar').style.width = pct + '%';
+  const cats = [...new Set(state.checklist.map(i => i.cat))];
+  const el = document.getElementById('checklist');
+  if (!total) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">Listan är tom</div><div class="empty-desc">Tryck + för att lägga till en uppgift</div></div>';
+    return;
+  }
+  el.innerHTML = cats.map(cat => {
+    const items = state.checklist.filter(i => i.cat === cat);
+    return `<div class="sec-label">${cat}</div>` + items.map(item => `
+      <div class="check-item${item.done?' done':''}" onclick="toggleCheck('${item.id}')">
+        <div class="check-circle">${item.done ? '✓' : ''}</div>
+        <span class="check-item-text">${item.text}</span>
+        <button class="check-del" onclick="event.stopPropagation();deleteCheck('${item.id}')">✕</button>
+      </div>
+    `).join('');
+  }).join('');
+  updateHomeStats();
+}
+
+function addCheck() {
+  const text = document.getElementById('in-check').value.trim();
+  const cat  = document.getElementById('in-cat').value;
+  if (!text) return;
+  state.checklist.push({ id: Date.now().toString(), text, cat, done: false });
+  save(); closeModal('modal-check'); document.getElementById('in-check').value = ''; renderChecklist();
+}
+
+function toggleCheck(id) {
+  const item = state.checklist.find(i => i.id === id);
+  if (item) { item.done = !item.done; save(); renderChecklist(); }
+}
+
+function deleteCheck(id) {
+  state.checklist = state.checklist.filter(i => i.id !== id);
+  save(); renderChecklist();
+}
+
+function renderStopsDetail() {
+  const el = document.getElementById('stops-detail');
+  if (!state.stops.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📍</div><div class="empty-title">Inga stopp planerade</div><div class="empty-desc">Gå till Karta och lägg till städer</div></div>';
+    return;
+  }
+  el.innerHTML = state.stops.map(s => `
+    <div class="stop-card">
+      <div class="stop-card-head">
+        <div>
+          <div class="stop-card-city">${s.city}</div>
+          <div class="stop-card-date">${fmtDate(s.from)} — ${fmtDate(s.to)}</div>
+        </div>
+        <span class="stop-card-emoji">${s.isHome ? '🏠' : '📍'}</span>
+      </div>
+      <div class="stop-card-body">
+        ${s.activities.length ? s.activities.map(a => `
+          <div class="activity-row">
+            <span class="act-emoji">${a.type}</span>
+            <span class="act-text">${a.text}</span>
+            <button class="act-del" onclick="deleteActivity('${s.id}','${a.id}')">✕</button>
+          </div>
+        `).join('') : '<p style="font-size:13px;color:var(--text-3);padding:4px 0 8px;">Inga aktiviteter än</p>'}
+        <button class="act-add-btn" onclick="openActivityModal('${s.id}')">+ Lägg till aktivitet</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openActivityModal(stopId) {
+  const sel = document.getElementById('in-act-stop');
+  sel.innerHTML = state.stops.map(s => `<option value="${s.id}">${s.city}</option>`).join('');
+  if (stopId) sel.value = stopId;
+  openModal('modal-activity');
+}
+
+function addActivity() {
+  const stopId = document.getElementById('in-act-stop').value;
+  const text   = document.getElementById('in-act-text').value.trim();
+  const type   = document.getElementById('in-act-type').value;
+  if (!text) return;
+  const stop = state.stops.find(s => s.id === stopId);
+  if (stop) { stop.activities.push({ id: Date.now().toString(), text, type }); save(); }
+  closeModal('modal-activity'); document.getElementById('in-act-text').value = ''; renderStopsDetail();
+}
+
+function deleteActivity(stopId, actId) {
+  const stop = state.stops.find(s => s.id === stopId);
+  if (stop) { stop.activities = stop.activities.filter(a => a.id !== actId); save(); renderStopsDetail(); }
+}
+
+function openExport() {
+  document.getElementById('export-data').value = JSON.stringify(state);
+  openModal('modal-export');
+}
+
+function copyExport() {
+  const ta = document.getElementById('export-data');
+  ta.select();
+  try {
+    navigator.clipboard.writeText(ta.value).then(() => {
+      const btn = document.querySelector('#modal-export .btn-main');
+      btn.textContent = '✅ Kopierat!';
+      setTimeout(() => btn.textContent = 'Kopiera till urklipp', 2200);
+    });
+  } catch(e) { document.execCommand('copy'); }
+}
+
+function openImport() { document.getElementById('import-data').value = ''; openModal('modal-import'); }
+
+function doImport() {
+  try {
+    const parsed = JSON.parse(document.getElementById('import-data').value.trim());
+    if (!parsed.stops || !parsed.checklist) throw new Error();
+    state = parsed; save(); closeModal('modal-import'); updateHomeStats();
+    alert('✅ Data importerad!');
+  } catch(e) { alert('❌ Kunde inte läsa koden. Kopiera hela texten och försök igen.'); }
+}
+
+function fmtDate(str) {
+  if (!str) return '–';
+  const d = new Date(str + 'T12:00:00');
+  return d.toLocaleDateString('sv-SE', { day:'numeric', month:'short' });
+}
+
+function updateCountdown() {
+  const diff = Math.ceil((new Date('2026-08-02T00:00:00') - new Date()) / 864e5);
+  const el = document.getElementById('cd-num');
+  if (el) el.textContent = Math.max(0, diff);
+}
+
+function updateHomeStats() {
+  const se = document.getElementById('home-stops');
+  const ce = document.getElementById('home-checks');
+  if (se) se.textContent = state.stops.length;
+  if (ce) ce.textContent = state.checklist.filter(i => i.done).length;
+}
+
+updateCountdown();
+updateHomeStats();
+setInterval(updateCountdown, 60000);
+</script>
+</body>
+</html>
