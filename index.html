@@ -4,213 +4,589 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="theme-color" content="#FAFAF8" />
-  <title>Tågluff 2026 🚂</title>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0C0C0C" />
+  <title>Tågluff 2026</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-    :root {
-      --bg: #FAFAF8; --surface: #FFFFFF; --border: #EBEBEB;
-      --primary: #111110; --accent: #C8963C; --accent-light: #FEF4E0;
-      --text: #111110; --text-2: #6B6B6B; --text-3: #ABABAB;
-      --green: #22C55E; --red: #EF4444; --yellow: #F59E0B;
-      --r: 16px; --r-sm: 10px;
-      --font: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      --safe-t: env(safe-area-inset-top, 20px);
-      --safe-b: env(safe-area-inset-bottom, 0px);
-      --nav-h: calc(64px + var(--safe-b));
+    *, *::before, *::after {
+      box-sizing: border-box; margin: 0; padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
-    html, body { height: 100%; width: 100%; font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; -webkit-font-smoothing: antialiased; }
-    #app { display: flex; flex-direction: column; height: 100%; max-width: 430px; margin: 0 auto; position: relative; }
-    .screen { display: none; flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding-bottom: calc(var(--nav-h) + 24px); }
+    :root {
+      --bg:         #0C0C0C;
+      --surface:    #141414;
+      --surface-2:  #1C1C1C;
+      --border:     #262626;
+      --border-2:   #303030;
+      --text:       #EFEFEF;
+      --text-2:     #808080;
+      --text-3:     #484848;
+      --accent:     #C8963C;
+      --accent-dim: #1A1208;
+      --green:      #4ADE80;
+      --green-dim:  #0A1F10;
+      --red:        #F87171;
+      --font:       'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --r:          10px;
+      --r-sm:       7px;
+      --safe-t:     env(safe-area-inset-top, 44px);
+      --safe-b:     env(safe-area-inset-bottom, 0px);
+      --nav-h:      calc(58px + var(--safe-b));
+    }
+    html, body {
+      height: 100%; width: 100%;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    #app {
+      display: flex; flex-direction: column;
+      height: 100%; max-width: 430px;
+      margin: 0 auto;
+    }
+
+    /* ── SCREENS ── */
+    .screen {
+      display: none; flex: 1;
+      overflow-y: auto; overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      padding-bottom: calc(var(--nav-h) + 20px);
+    }
     .screen.active { display: block; }
-    .topbar { padding: calc(var(--safe-t) + 12px) 20px 14px; background: var(--bg); position: sticky; top: 0; z-index: 20; }
-    .topbar h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.6px; line-height: 1.1; }
-    .topbar .sub { font-size: 13px; color: var(--text-2); margin-top: 2px; font-weight: 400; }
-    .sec-label { font-size: 11px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: 1px; margin: 24px 20px 10px; }
 
-    /* SYNC BADGE */
-    .sync-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; margin-top: 4px; }
-    .sync-badge.online  { background: #DCFCE7; color: #16A34A; }
-    .sync-badge.offline { background: #FEF9C3; color: #A16207; }
-    .sync-badge.syncing { background: #EFF6FF; color: #2563EB; }
-    .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-    .sync-badge.syncing .sync-dot { animation: pulse 1s ease-in-out infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    /* ── TOP BAR ── */
+    .topbar {
+      padding: calc(var(--safe-t) + 14px) 20px 14px;
+      background: var(--bg);
+      position: sticky; top: 0; z-index: 20;
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar h1 {
+      font-size: 17px; font-weight: 600;
+      letter-spacing: -0.2px; color: var(--text);
+    }
+    .topbar-row {
+      display: flex; align-items: center;
+      justify-content: space-between;
+    }
 
-    .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: rgba(255,255,255,0.96); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-top: 1px solid var(--border); display: flex; padding: 8px 0 calc(8px + var(--safe-b)); z-index: 100; }
-    .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; background: none; border: none; cursor: pointer; transition: transform 0.12s ease; }
-    .nav-btn:active { transform: scale(0.88); }
-    .nav-icon { font-size: 22px; line-height: 1; }
-    .nav-label { font-size: 10px; font-weight: 600; color: var(--text-3); font-family: var(--font); transition: color 0.15s; }
-    .nav-btn.active .nav-label { color: var(--accent); }
-    .fab { position: fixed; bottom: calc(var(--nav-h) + 16px); right: max(16px, calc((100vw - 430px) / 2 + 16px)); width: 52px; height: 52px; border-radius: 50%; background: var(--primary); color: white; font-size: 26px; font-weight: 300; border: none; cursor: pointer; display: none; align-items: center; justify-content: center; box-shadow: 0 6px 24px rgba(0,0,0,0.22); z-index: 90; transition: transform 0.12s ease; }
-    .fab:active { transform: scale(0.90); }
+    /* ── SYNC INDICATOR ── */
+    .sync-pill {
+      display: flex; align-items: center;
+      gap: 5px; font-size: 11px; font-weight: 500;
+      color: var(--text-2);
+    }
+    .sync-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--text-3);
+      transition: background 0.3s;
+    }
+    .sync-pill.online  .sync-dot { background: var(--green); }
+    .sync-pill.offline .sync-dot { background: var(--red); }
+    .sync-pill.syncing .sync-dot { background: var(--accent); animation: pulse 1s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
-    .hero { margin: 0 20px; background: var(--primary); color: white; border-radius: 20px; padding: 24px; position: relative; overflow: hidden; }
-    .hero::after { content: '🚂'; font-size: 96px; position: absolute; right: -16px; bottom: -16px; opacity: 0.12; line-height: 1; pointer-events: none; }
-    .hero-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.12); border-radius: 20px; padding: 4px 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 14px; }
-    .hero-count { font-size: 64px; font-weight: 700; line-height: 1; letter-spacing: -3px; }
-    .hero-sub { font-size: 14px; opacity: 0.65; margin-top: 4px; font-weight: 400; }
-    .hero-dates { margin-top: 18px; font-size: 15px; font-weight: 600; opacity: 0.9; display: flex; align-items: center; gap: 8px; }
-    .hero-dates-sep { width: 24px; height: 1px; background: rgba(255,255,255,0.3); }
+    /* ── BOTTOM NAV ── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 100%; max-width: 430px;
+      background: rgba(12,12,12,0.94);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      padding: 6px 0 calc(6px + var(--safe-b));
+      z-index: 100;
+    }
+    .nav-btn {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; gap: 4px;
+      padding: 7px 0;
+      background: none; border: none; cursor: pointer;
+      transition: opacity 0.12s;
+    }
+    .nav-btn:active { opacity: 0.5; }
+    .nav-btn svg { stroke: var(--text-3); transition: stroke 0.15s; }
+    .nav-btn.active svg { stroke: var(--text); }
+    .nav-label {
+      font-size: 9.5px; font-weight: 500;
+      color: var(--text-3); font-family: var(--font);
+      transition: color 0.15s; letter-spacing: 0.2px;
+    }
+    .nav-btn.active .nav-label { color: var(--text); }
 
-    .crew-scroll { display: flex; gap: 14px; overflow-x: auto; padding: 0 20px 4px; -ms-overflow-style: none; scrollbar-width: none; }
-    .crew-scroll::-webkit-scrollbar { display: none; }
-    .crew-item { display: flex; flex-direction: column; align-items: center; gap: 7px; min-width: 58px; }
-    .crew-avatar { width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: white; }
-    .crew-name { font-size: 11px; font-weight: 500; color: var(--text-2); text-align: center; line-height: 1.2; }
-    .crew-tag { font-size: 9px; font-weight: 700; background: var(--accent-light); color: var(--accent); border-radius: 20px; padding: 2px 7px; letter-spacing: 0.3px; }
-    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px; }
-    .stat-card { background: var(--surface); border-radius: var(--r-sm); padding: 16px; border: 1px solid var(--border); }
-    .stat-val { font-size: 32px; font-weight: 700; letter-spacing: -1.5px; line-height: 1; }
-    .stat-lbl { font-size: 12px; color: var(--text-2); margin-top: 3px; font-weight: 400; }
+    /* ── FAB ── */
+    .fab {
+      position: fixed;
+      bottom: calc(var(--nav-h) + 14px);
+      right: max(16px, calc((100vw - 430px) / 2 + 16px));
+      width: 46px; height: 46px;
+      border-radius: 50%;
+      background: var(--text);
+      color: var(--bg);
+      border: none; cursor: pointer;
+      display: none; align-items: center; justify-content: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+      z-index: 90; transition: transform 0.1s, opacity 0.1s;
+    }
+    .fab:active { transform: scale(0.91); opacity: 0.8; }
+    .fab svg { stroke: var(--bg); }
 
-    #map { height: 320px; width: 100%; }
-    .stop-chip { display: flex; align-items: center; gap: 12px; background: var(--surface); border-radius: var(--r-sm); padding: 14px 16px; margin: 0 20px 10px; border: 1px solid var(--border); }
-    .stop-chip-icon { font-size: 22px; flex-shrink: 0; }
+    /* ── SECTION LABEL ── */
+    .sec { margin: 28px 20px 10px; }
+    .sec-lbl {
+      font-size: 10px; font-weight: 600;
+      color: var(--text-3); text-transform: uppercase;
+      letter-spacing: 1.2px;
+    }
+
+    /* ── HOME: HERO ── */
+    .hero {
+      margin: 16px 20px 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 28px 24px 24px;
+    }
+    .hero-eyebrow {
+      font-size: 10px; font-weight: 600;
+      color: var(--text-3); text-transform: uppercase;
+      letter-spacing: 1.4px; margin-bottom: 10px;
+    }
+    .hero-number {
+      font-size: 72px; font-weight: 700;
+      line-height: 1; letter-spacing: -4px;
+      color: var(--text);
+    }
+    .hero-unit {
+      font-size: 14px; font-weight: 400;
+      color: var(--text-2); margin-top: 6px;
+    }
+    .hero-divider {
+      height: 1px; background: var(--border);
+      margin: 20px 0;
+    }
+    .hero-dates {
+      font-size: 14px; font-weight: 500;
+      color: var(--text-2);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .hero-dates strong { color: var(--text); font-weight: 600; }
+    .hero-dates-sep {
+      width: 16px; height: 1px;
+      background: var(--border-2);
+    }
+
+    /* ── HOME: CREW ── */
+    .crew-row {
+      display: flex; gap: 10px;
+      overflow-x: auto; padding: 0 20px 2px;
+      -ms-overflow-style: none; scrollbar-width: none;
+    }
+    .crew-row::-webkit-scrollbar { display: none; }
+    .crew-item {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 7px;
+      min-width: 54px;
+    }
+    .crew-avatar {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; font-weight: 700; color: white;
+    }
+    .crew-name {
+      font-size: 11px; font-weight: 500;
+      color: var(--text-2); text-align: center;
+    }
+    .crew-badge {
+      font-size: 9px; font-weight: 600;
+      background: var(--accent-dim); color: var(--accent);
+      border-radius: 4px; padding: 2px 6px;
+      letter-spacing: 0.3px; text-transform: uppercase;
+    }
+
+    /* ── HOME: STATS ── */
+    .stats-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px; padding: 0 20px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r); padding: 16px;
+    }
+    .stat-val {
+      font-size: 28px; font-weight: 700;
+      letter-spacing: -1.5px; color: var(--text);
+    }
+    .stat-lbl {
+      font-size: 12px; color: var(--text-2);
+      margin-top: 2px; font-weight: 400;
+    }
+
+    /* ── MAP ── */
+    #map { height: 300px; width: 100%; }
+    .leaflet-container { font-family: var(--font) !important; background: #111 !important; }
+
+    /* ── STOP CHIP ── */
+    .stop-chip {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--surface);
+      border-radius: var(--r-sm);
+      padding: 13px 16px;
+      margin: 0 20px 8px;
+      border: 1px solid var(--border);
+    }
+    .stop-chip-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      flex-shrink: 0;
+    }
     .stop-chip-info { flex: 1; min-width: 0; }
-    .stop-chip-name { font-size: 15px; font-weight: 600; }
-    .stop-chip-dates { font-size: 12px; color: var(--text-2); margin-top: 2px; }
-    .stop-chip-del { background: none; border: none; color: var(--text-3); font-size: 18px; cursor: pointer; padding: 6px; flex-shrink: 0; }
+    .stop-chip-name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .stop-chip-date { font-size: 12px; color: var(--text-2); margin-top: 1px; }
+    .stop-chip-del {
+      background: none; border: none;
+      color: var(--text-3); cursor: pointer; padding: 4px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
     .stop-chip-del:active { color: var(--red); }
 
-    .check-item { display: flex; align-items: center; gap: 14px; background: var(--surface); border-radius: var(--r-sm); padding: 14px 16px; margin: 0 20px 8px; border: 1px solid var(--border); cursor: pointer; transition: opacity 0.2s; -webkit-user-select: none; user-select: none; }
-    .check-item.done { opacity: 0.5; }
-    .check-circle { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px; transition: all 0.2s; }
-    .check-item.done .check-circle { background: var(--green); border-color: var(--green); color: white; }
-    .check-item-text { flex: 1; font-size: 15px; min-width: 0; }
-    .check-item.done .check-item-text { text-decoration: line-through; }
-    .check-del { background: none; border: none; color: var(--text-3); font-size: 18px; cursor: pointer; padding: 4px 2px; flex-shrink: 0; }
+    /* ── CHECKLIST ── */
+    .progress-wrap {
+      height: 1px; background: var(--border);
+      margin: 0 20px 2px; position: relative;
+    }
+    .progress-fill {
+      height: 100%; background: var(--accent);
+      border-radius: 1px; transition: width 0.4s ease;
+      position: absolute; top: 0; left: 0;
+    }
+
+    .check-item {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--surface);
+      border-radius: var(--r-sm);
+      padding: 13px 14px;
+      margin: 0 20px 6px;
+      border: 1px solid var(--border);
+      cursor: pointer; transition: opacity 0.2s;
+      -webkit-user-select: none; user-select: none;
+    }
+    .check-item.done { opacity: 0.4; }
+    .check-box {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-2);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .check-item.done .check-box {
+      background: var(--green); border-color: var(--green);
+    }
+    .check-box-inner {
+      width: 0; height: 0; overflow: hidden;
+      transition: all 0.15s;
+    }
+    .check-item.done .check-box-inner {
+      width: auto; height: auto;
+    }
+    .check-text {
+      flex: 1; font-size: 14px; color: var(--text);
+      min-width: 0; line-height: 1.4;
+    }
+    .check-item.done .check-text { text-decoration: line-through; color: var(--text-2); }
+    .check-del {
+      background: none; border: none;
+      color: var(--text-3); cursor: pointer; padding: 4px;
+      display: flex; align-items: center; flex-shrink: 0;
+    }
     .check-del:active { color: var(--red); }
 
-    .stop-card { background: var(--surface); border-radius: var(--r); margin: 0 20px 16px; border: 1px solid var(--border); overflow: hidden; }
-    .stop-card-head { padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
-    .stop-card-city { font-size: 17px; font-weight: 700; }
+    /* ── STOP CARDS ── */
+    .stop-card {
+      background: var(--surface);
+      border-radius: var(--r);
+      margin: 0 20px 12px;
+      border: 1px solid var(--border); overflow: hidden;
+    }
+    .stop-card-head {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 8px;
+    }
+    .stop-card-city { font-size: 15px; font-weight: 600; }
     .stop-card-date { font-size: 12px; color: var(--text-2); margin-top: 2px; }
-    .stop-card-emoji { font-size: 26px; }
-    .stop-card-body { padding: 14px 18px 4px; }
-    .activity-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
-    .activity-row:last-of-type { border-bottom: none; }
-    .act-emoji { font-size: 18px; flex-shrink: 0; }
-    .act-text { flex: 1; font-size: 14px; min-width: 0; }
-    .act-del { background: none; border: none; color: var(--text-3); font-size: 16px; cursor: pointer; padding: 4px; flex-shrink: 0; }
+    .stop-home-tag {
+      font-size: 10px; font-weight: 600;
+      color: var(--text-3); text-transform: uppercase;
+      letter-spacing: 0.8px; margin-top: 4px;
+    }
+    .stop-card-body { padding: 4px 0; }
+    .act-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .act-row:last-of-type { border-bottom: none; }
+    .act-tag {
+      font-size: 10px; font-weight: 600;
+      color: var(--text-3); text-transform: uppercase;
+      letter-spacing: 0.5px; min-width: 56px; flex-shrink: 0;
+    }
+    .act-text { flex: 1; font-size: 13px; color: var(--text); min-width: 0; }
+    .act-del {
+      background: none; border: none;
+      color: var(--text-3); cursor: pointer; padding: 4px;
+      display: flex; align-items: center; flex-shrink: 0;
+    }
     .act-del:active { color: var(--red); }
-    .act-add-btn { display: flex; align-items: center; gap: 6px; color: var(--accent); background: none; border: none; font-size: 14px; font-weight: 600; cursor: pointer; padding: 10px 0 14px; font-family: var(--font); }
-    .act-add-btn:active { opacity: 0.6; }
+    .act-add {
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: none;
+      font-size: 13px; font-weight: 500;
+      color: var(--text-3); cursor: pointer;
+      padding: 12px 16px; font-family: var(--font);
+      transition: color 0.15s;
+    }
+    .act-add:active { color: var(--text); }
 
-    .empty { text-align: center; padding: 48px 24px; color: var(--text-2); }
-    .empty-icon { font-size: 48px; margin-bottom: 12px; }
-    .empty-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
-    .empty-desc { font-size: 14px; line-height: 1.5; }
+    /* ── EMPTY STATE ── */
+    .empty {
+      text-align: center; padding: 56px 24px;
+      color: var(--text-3);
+    }
+    .empty-title { font-size: 15px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; }
+    .empty-desc { font-size: 13px; line-height: 1.6; }
 
-    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.48); z-index: 200; display: none; align-items: flex-end; justify-content: center; }
+    /* ── MODALS ── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 200; display: none;
+      align-items: flex-end; justify-content: center;
+    }
     .overlay.open { display: flex; }
-    .sheet { background: var(--bg); border-radius: 24px 24px 0 0; width: 100%; max-width: 430px; padding: 0 22px calc(22px + var(--safe-b)); max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-    .sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 14px auto 20px; }
-    .sheet-title { font-size: 20px; font-weight: 700; margin-bottom: 22px; }
-    .form-grp { margin-bottom: 16px; }
-    .form-lbl { display: block; font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .finput { width: 100%; padding: 14px 14px; border: 1.5px solid var(--border); border-radius: var(--r-sm); font-size: 16px; font-family: var(--font); font-weight: 400; background: var(--surface); color: var(--text); outline: none; -webkit-appearance: none; transition: border-color 0.15s; }
-    .finput:focus { border-color: var(--accent); }
-    select.finput { appearance: none; -webkit-appearance: none; }
-    .btn-main { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: var(--r-sm); font-size: 16px; font-weight: 600; font-family: var(--font); cursor: pointer; margin-top: 6px; transition: opacity 0.15s; }
-    .btn-main:active { opacity: 0.75; }
-    .btn-cancel { width: 100%; padding: 14px; background: none; border: none; font-size: 16px; color: var(--text-2); font-family: var(--font); cursor: pointer; margin-top: 6px; }
-    .btn-cancel:active { opacity: 0.6; }
-    .geo-status { font-size: 12px; color: var(--accent); margin-top: 6px; min-height: 16px; }
-    .progress-bar-wrap { height: 4px; background: var(--border); border-radius: 2px; margin: 4px 20px 0; overflow: hidden; }
-    .progress-bar-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.4s ease; }
+    .sheet {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: 16px 16px 0 0;
+      width: 100%; max-width: 430px;
+      padding: 0 20px calc(20px + var(--safe-b));
+      max-height: 90vh;
+      overflow-y: auto; -webkit-overflow-scrolling: touch;
+    }
+    .sheet-handle {
+      width: 32px; height: 3px;
+      background: var(--border-2); border-radius: 2px;
+      margin: 12px auto 18px;
+    }
+    .sheet-title { font-size: 17px; font-weight: 600; margin-bottom: 20px; }
 
-    /* Loading spinner */
-    .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; gap: 14px; color: var(--text-2); }
-    .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    /* ── FORM ── */
+    .form-grp { margin-bottom: 14px; }
+    .form-lbl {
+      display: block; font-size: 11px; font-weight: 600;
+      color: var(--text-3); margin-bottom: 7px;
+      text-transform: uppercase; letter-spacing: 0.8px;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .finput {
+      width: 100%; padding: 13px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border-2);
+      border-radius: var(--r-sm);
+      font-size: 16px; font-family: var(--font);
+      color: var(--text); outline: none;
+      -webkit-appearance: none; appearance: none;
+      transition: border-color 0.15s;
+    }
+    .finput:focus { border-color: var(--accent); }
+    .finput::placeholder { color: var(--text-3); }
+    select.finput { -webkit-appearance: none; appearance: none; }
+
+    .btn-primary {
+      width: 100%; padding: 15px;
+      background: var(--text); color: var(--bg);
+      border: none; border-radius: var(--r-sm);
+      font-size: 15px; font-weight: 600;
+      font-family: var(--font); cursor: pointer;
+      margin-top: 8px; transition: opacity 0.15s;
+    }
+    .btn-primary:active { opacity: 0.75; }
+    .btn-secondary {
+      width: 100%; padding: 14px;
+      background: none; border: none;
+      font-size: 15px; color: var(--text-2);
+      font-family: var(--font); cursor: pointer; margin-top: 4px;
+    }
+    .btn-secondary:active { opacity: 0.6; }
+
+    .geo-hint {
+      font-size: 11px; color: var(--accent);
+      margin-top: 6px; min-height: 14px;
+    }
   </style>
 </head>
 <body>
 <div id="app">
+
+  <!-- HOME -->
   <div id="screen-home" class="screen active">
     <div class="topbar">
-      <h1>Tågluff 2026 🚂</h1>
-      <div id="sync-status" class="sync-badge syncing"><div class="sync-dot"></div><span>Ansluter…</span></div>
-    </div>
-    <div class="hero">
-      <div class="hero-badge">⏳ Avresa om</div>
-      <div class="hero-count" id="cd-num">–</div>
-      <div class="hero-sub">dagar kvar</div>
-      <div class="hero-dates">
-        <span>2 aug</span><div class="hero-dates-sep"></div>
-        <span>16 aug</span>
-        <span style="opacity:0.5;font-size:13px;font-weight:400;">· 15 dagar</span>
+      <div class="topbar-row">
+        <h1>Tågluff 2026</h1>
+        <div class="sync-pill syncing" id="sync-pill">
+          <div class="sync-dot"></div>
+          <span id="sync-txt">Ansluter</span>
+        </div>
       </div>
     </div>
-    <div class="sec-label">Gänget</div>
-    <div class="crew-scroll">
-      <div class="crew-item"><div class="crew-avatar" style="background:#6366F1;">A</div><span class="crew-name">Aston</span></div>
-      <div class="crew-item"><div class="crew-avatar" style="background:#F59E0B;">M</div><span class="crew-name">Molle</span><span class="crew-tag">⚽ Gaffer</span></div>
-      <div class="crew-item"><div class="crew-avatar" style="background:#10B981;">J</div><span class="crew-name">Jacob</span></div>
-      <div class="crew-item"><div class="crew-avatar" style="background:#EF4444;">C</div><span class="crew-name">Cesar</span></div>
-      <div class="crew-item"><div class="crew-avatar" style="background:#3B82F6;">I</div><span class="crew-name">Ivar</span></div>
+
+    <div class="hero">
+      <div class="hero-eyebrow">Avresa om</div>
+      <div class="hero-number" id="cd-num">–</div>
+      <div class="hero-unit">dagar</div>
+      <div class="hero-divider"></div>
+      <div class="hero-dates">
+        <strong>2 aug</strong>
+        <div class="hero-dates-sep"></div>
+        <strong>16 aug</strong>
+        <span style="margin-left:2px;">· 15 dagar</span>
+      </div>
     </div>
-    <div class="sec-label" style="margin-top:20px;">Snabbinfo</div>
+
+    <div class="sec"><div class="sec-lbl">Gänget</div></div>
+    <div class="crew-row">
+      <div class="crew-item">
+        <div class="crew-avatar" style="background:#5B5BD6;">A</div>
+        <span class="crew-name">Aston</span>
+      </div>
+      <div class="crew-item">
+        <div class="crew-avatar" style="background:#E79D13;">M</div>
+        <span class="crew-name">Molle</span>
+        <span class="crew-badge">Gaffer</span>
+      </div>
+      <div class="crew-item">
+        <div class="crew-avatar" style="background:#1A9E5E;">J</div>
+        <span class="crew-name">Jacob</span>
+      </div>
+      <div class="crew-item">
+        <div class="crew-avatar" style="background:#D14343;">C</div>
+        <span class="crew-name">Cesar</span>
+      </div>
+      <div class="crew-item">
+        <div class="crew-avatar" style="background:#2870D4;">I</div>
+        <span class="crew-name">Ivar</span>
+      </div>
+    </div>
+
+    <div class="sec"><div class="sec-lbl">Reseinfo</div></div>
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-val">15</div><div class="stat-lbl">Dagar på resande fot</div></div>
-      <div class="stat-card"><div class="stat-val">5</div><div class="stat-lbl">Resenärer</div></div>
-      <div class="stat-card"><div class="stat-val" id="home-stops">–</div><div class="stat-lbl">Stopp planerade</div></div>
-      <div class="stat-card"><div class="stat-val" id="home-checks">–</div><div class="stat-lbl">Uppgifter klara</div></div>
+      <div class="stat-card">
+        <div class="stat-val">15</div>
+        <div class="stat-lbl">Dagar</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">5</div>
+        <div class="stat-lbl">Resenärer</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="home-stops">–</div>
+        <div class="stat-lbl">Stopp planerade</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="home-checks">–</div>
+        <div class="stat-lbl">Uppgifter klara</div>
+      </div>
     </div>
   </div>
 
+  <!-- MAP -->
   <div id="screen-map" class="screen">
     <div class="topbar">
-      <h1>Rutt 🗺️</h1>
-      <p class="sub" id="map-sub">Tryck + för att lägga till ett stopp</p>
+      <div class="topbar-row">
+        <h1>Rutt</h1>
+        <span id="map-count" style="font-size:12px;color:var(--text-3);font-weight:500;"></span>
+      </div>
     </div>
     <div id="map"></div>
-    <div class="sec-label">Planerade stopp</div>
+    <div class="sec"><div class="sec-lbl">Stopp</div></div>
     <div id="stops-list"></div>
   </div>
 
+  <!-- CHECKLIST -->
   <div id="screen-check" class="screen">
     <div class="topbar">
-      <h1>Checklista ✅</h1>
-      <p class="sub" id="check-sub">Laddar…</p>
+      <div class="topbar-row">
+        <h1>Checklista</h1>
+        <span id="check-count" style="font-size:12px;color:var(--text-3);font-weight:500;"></span>
+      </div>
     </div>
-    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="check-bar" style="width:0%"></div></div>
+    <div class="progress-wrap" style="margin-top:2px;">
+      <div class="progress-fill" id="check-bar" style="width:0%"></div>
+    </div>
     <div id="checklist"></div>
   </div>
 
+  <!-- STOPS DETAIL -->
   <div id="screen-stops" class="screen">
     <div class="topbar">
-      <h1>Stopp 📍</h1>
-      <p class="sub">Boenden &amp; aktiviteter</p>
+      <h1>Stopp</h1>
     </div>
     <div id="stops-detail"></div>
   </div>
 
   <nav class="bottom-nav">
     <button class="nav-btn active" id="nav-home" onclick="goTo('home')">
-      <span class="nav-icon">🏠</span><span class="nav-label">Hem</span>
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      <span class="nav-label">Hem</span>
     </button>
     <button class="nav-btn" id="nav-map" onclick="goTo('map')">
-      <span class="nav-icon">🗺️</span><span class="nav-label">Karta</span>
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+        <line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/>
+      </svg>
+      <span class="nav-label">Karta</span>
     </button>
     <button class="nav-btn" id="nav-check" onclick="goTo('check')">
-      <span class="nav-icon">✅</span><span class="nav-label">Lista</span>
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 11 12 14 22 4"/>
+        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+      </svg>
+      <span class="nav-label">Lista</span>
     </button>
     <button class="nav-btn" id="nav-stops" onclick="goTo('stops')">
-      <span class="nav-icon">📍</span><span class="nav-label">Stopp</span>
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>
+      <span class="nav-label">Stopp</span>
     </button>
   </nav>
 </div>
 
-<button class="fab" id="fab" onclick="fabAction()">+</button>
+<button class="fab" id="fab" onclick="fabAction()">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>
+</button>
 
 <!-- MODAL: Add Stop -->
 <div class="overlay" id="modal-stop">
@@ -220,21 +596,21 @@
     <div class="form-grp">
       <label class="form-lbl">Stad</label>
       <input class="finput" id="in-city" placeholder="t.ex. Berlin" autocomplete="off" inputmode="text" />
-      <div class="geo-status" id="geo-status"></div>
+      <div class="geo-hint" id="geo-hint"></div>
     </div>
     <div class="form-grp">
-      <label class="form-lbl">Ankomst → Avresa</label>
+      <label class="form-lbl">Datum</label>
       <div class="form-row">
         <input class="finput" id="in-from" type="date" min="2026-08-02" max="2026-08-16" />
-        <input class="finput" id="in-to" type="date" min="2026-08-02" max="2026-08-16" />
+        <input class="finput" id="in-to"   type="date" min="2026-08-02" max="2026-08-16" />
       </div>
     </div>
-    <button class="btn-main" id="stop-add-btn" onclick="geocodeAndAdd()">Lägg till stopp</button>
-    <button class="btn-cancel" onclick="closeModal('modal-stop')">Avbryt</button>
+    <button class="btn-primary" id="stop-add-btn" onclick="geocodeAndAdd()">Lägg till</button>
+    <button class="btn-secondary" onclick="closeModal('modal-stop')">Avbryt</button>
   </div>
 </div>
 
-<!-- MODAL: Add Checklist Item -->
+<!-- MODAL: Add Check -->
 <div class="overlay" id="modal-check">
   <div class="sheet">
     <div class="sheet-handle"></div>
@@ -251,8 +627,8 @@
         <option>Under resan</option>
       </select>
     </div>
-    <button class="btn-main" onclick="addCheck()">Lägg till</button>
-    <button class="btn-cancel" onclick="closeModal('modal-check')">Avbryt</button>
+    <button class="btn-primary" onclick="addCheck()">Lägg till</button>
+    <button class="btn-secondary" onclick="closeModal('modal-check')">Avbryt</button>
   </div>
 </div>
 
@@ -270,143 +646,117 @@
       <input class="finput" id="in-act-text" placeholder="t.ex. Hostel Mitte, check-in 15:00" autocomplete="off" />
     </div>
     <div class="form-grp">
-      <label class="form-lbl">Typ</label>
+      <label class="form-lbl">Kategori</label>
       <select class="finput" id="in-act-type">
-        <option value="🏨">🏨  Boende</option>
-        <option value="🍽️">🍽️  Mat &amp; dryck</option>
-        <option value="🎡">🎡  Aktivitet</option>
-        <option value="🚂">🚂  Transport</option>
-        <option value="📸">📸  Sevärdhet</option>
-        <option value="🎵">🎵  Nöje / nattliv</option>
-        <option value="💡">💡  Tips</option>
+        <option value="boende">Boende</option>
+        <option value="mat">Mat & dryck</option>
+        <option value="aktivitet">Aktivitet</option>
+        <option value="transport">Transport</option>
+        <option value="sevärdhet">Sevärdhet</option>
+        <option value="noje">Nöje</option>
+        <option value="tips">Tips</option>
       </select>
     </div>
-    <button class="btn-main" onclick="addActivity()">Lägg till</button>
-    <button class="btn-cancel" onclick="closeModal('modal-activity')">Avbryt</button>
+    <button class="btn-primary" onclick="addActivity()">Lägg till</button>
+    <button class="btn-secondary" onclick="closeModal('modal-activity')">Avbryt</button>
   </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<!-- Firebase SDK (compat for global-scope usage) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
 <script>
-// ============================================================
-//  FIREBASE INIT
-// ============================================================
-const firebaseConfig = {
+// ── FIREBASE ──────────────────────────────────────────────
+firebase.initializeApp({
   apiKey:            "AIzaSyCS7frMIpfvfO29EWmUXuhD2tMmhLenKCA",
   authDomain:        "tagluff-2026.firebaseapp.com",
   projectId:         "tagluff-2026",
   storageBucket:     "tagluff-2026.firebasestorage.app",
   messagingSenderId: "559457911138",
   appId:             "1:559457911138:web:2bbfd432ff2cfaf8572c3b"
-};
-
-firebase.initializeApp(firebaseConfig);
+});
 const db = firebase.firestore();
 const tripRef = db.collection('trips').doc('tagluff2026');
 
-// ============================================================
-//  DEFAULT STATE (seeded once into Firestore)
-// ============================================================
-const DEFAULT_STATE = {
+// ── DEFAULTS ──────────────────────────────────────────────
+const DEFAULTS = {
   stops: [
-    { id: 'sto', city: 'Stockholm', from: '2026-08-02', to: '2026-08-02', lat: 59.3293, lng: 18.0686, activities: [], isHome: true }
+    { id:'sto', city:'Stockholm', from:'2026-08-02', to:'2026-08-02',
+      lat:59.3293, lng:18.0686, activities:[], isHome:true }
   ],
   checklist: [
-    { id: 'c1', text: 'Köp Eurail-kort',              cat: 'Före resan', done: false },
-    { id: 'c2', text: 'Ladda ner offline-kartor',     cat: 'Före resan', done: false },
-    { id: 'c3', text: 'Bokningsnummer på ett ställe', cat: 'Före resan', done: false },
-    { id: 'c4', text: 'Kolla EU-sjukkort (EHIC)',     cat: 'Före resan', done: false },
-    { id: 'c5', text: 'Pass',                         cat: 'Packlista',  done: false },
-    { id: 'c6', text: 'Laddare + universaladapter',   cat: 'Packlista',  done: false },
-    { id: 'c7', text: 'Powerbank',                    cat: 'Packlista',  done: false },
-    { id: 'c8', text: 'Regnjacka',                    cat: 'Packlista',  done: false },
-    { id: 'c9', text: 'Kontanter (euro)',              cat: 'Packlista',  done: false },
+    { id:'c1', text:'Köp Eurail-kort',              cat:'Före resan', done:false },
+    { id:'c2', text:'Ladda ner offline-kartor',     cat:'Före resan', done:false },
+    { id:'c3', text:'Bokningsnummer på ett ställe', cat:'Före resan', done:false },
+    { id:'c4', text:'Kolla EU-sjukkort (EHIC)',     cat:'Före resan', done:false },
+    { id:'c5', text:'Pass',                         cat:'Packlista',  done:false },
+    { id:'c6', text:'Laddare + universaladapter',   cat:'Packlista',  done:false },
+    { id:'c7', text:'Powerbank',                    cat:'Packlista',  done:false },
+    { id:'c8', text:'Regnjacka',                    cat:'Packlista',  done:false },
+    { id:'c9', text:'Kontanter (euro)',              cat:'Packlista',  done:false },
   ]
 };
 
-// ============================================================
-//  APP STATE (live copy from Firestore)
-// ============================================================
+// ── STATE ─────────────────────────────────────────────────
 let state = null;
 let mapInst = null;
 let mapLayers = [];
 let currentTab = 'home';
-let saveDebounce = null;
+let saveTimer = null;
 
-// ============================================================
-//  FIRESTORE SYNC
-// ============================================================
-function setSyncStatus(status) {
-  const el = document.getElementById('sync-status');
-  if (!el) return;
-  const labels = { online: '🟢 Synkad', offline: '⚠️ Offline', syncing: '⟳ Synkar…' };
-  el.className = 'sync-badge ' + status;
-  el.innerHTML = `<div class="sync-dot"></div><span>${labels[status]}</span>`;
+// ── SYNC STATUS ───────────────────────────────────────────
+function setSync(s) {
+  const pill = document.getElementById('sync-pill');
+  const txt  = document.getElementById('sync-txt');
+  if (!pill) return;
+  pill.className = 'sync-pill ' + s;
+  txt.textContent = s === 'online' ? 'Synkad' : s === 'offline' ? 'Offline' : 'Synkar';
 }
 
-// Listen for real-time updates
+// ── FIRESTORE LISTENER ────────────────────────────────────
 tripRef.onSnapshot(snap => {
   if (!snap.exists) {
-    // First time — seed default data
-    tripRef.set(DEFAULT_STATE);
-    state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+    tripRef.set(DEFAULTS);
+    state = JSON.parse(JSON.stringify(DEFAULTS));
   } else {
     state = snap.data();
   }
-  setSyncStatus('online');
-  refreshCurrentTab();
-  updateHomeStats();
-}, err => {
-  setSyncStatus('offline');
-  // Fallback to localStorage if offline
+  setSync('online');
+  refreshTab();
+  updateStats();
+}, () => {
+  setSync('offline');
   if (!state) {
-    try { state = JSON.parse(localStorage.getItem('tagluff26') || 'null') || JSON.parse(JSON.stringify(DEFAULT_STATE)); } catch(e) { state = JSON.parse(JSON.stringify(DEFAULT_STATE)); }
-    refreshCurrentTab();
-    updateHomeStats();
+    try { state = JSON.parse(localStorage.getItem('tg26') || 'null') || JSON.parse(JSON.stringify(DEFAULTS)); }
+    catch(e) { state = JSON.parse(JSON.stringify(DEFAULTS)); }
+    refreshTab(); updateStats();
   }
 });
 
-// Save to Firestore (debounced 400ms to batch rapid changes)
 function save() {
   if (!state) return;
-  setSyncStatus('syncing');
-  // Also save to localStorage as offline fallback
-  try { localStorage.setItem('tagluff26', JSON.stringify(state)); } catch(e) {}
-  clearTimeout(saveDebounce);
-  saveDebounce = setTimeout(() => {
+  setSync('syncing');
+  try { localStorage.setItem('tg26', JSON.stringify(state)); } catch(e) {}
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
     tripRef.set(state)
-      .then(() => setSyncStatus('online'))
-      .catch(() => setSyncStatus('offline'));
-  }, 400);
+      .then(() => setSync('online'))
+      .catch(() => setSync('offline'));
+  }, 500);
 }
 
-function refreshCurrentTab() {
-  if (currentTab === 'home')  updateHomeStats();
-  if (currentTab === 'map')   { if (mapInst) renderMapStops(); }
-  if (currentTab === 'check') renderChecklist();
-  if (currentTab === 'stops') renderStopsDetail();
-}
-
-// ============================================================
-//  NAVIGATION
-// ============================================================
+// ── NAVIGATION ────────────────────────────────────────────
 function goTo(tab) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('screen-' + tab).classList.add('active');
-  document.getElementById('nav-' + tab).classList.add('active');
+  document.getElementById('nav-'    + tab).classList.add('active');
   currentTab = tab;
-  const fab = document.getElementById('fab');
-  fab.style.display = tab === 'home' ? 'none' : 'flex';
-  if (tab === 'map')   { setTimeout(initMap, 80); if (state) renderMapStops(); }
+  document.getElementById('fab').style.display = tab === 'home' ? 'none' : 'flex';
+  if (tab === 'map')   { setTimeout(initMap, 80); if (state) renderMap(); }
   if (tab === 'check') { if (state) renderChecklist(); }
-  if (tab === 'stops') { if (state) renderStopsDetail(); }
-  if (tab === 'home')  updateHomeStats();
+  if (tab === 'stops') { if (state) renderStops(); }
+  if (tab === 'home')  updateStats();
 }
 
 function fabAction() {
@@ -415,127 +765,150 @@ function fabAction() {
   if (currentTab === 'stops') openActivityModal(null);
 }
 
-function openModal(id) { document.getElementById(id).classList.add('open'); }
+function refreshTab() {
+  if (currentTab === 'home')  updateStats();
+  if (currentTab === 'map'  && mapInst) renderMap();
+  if (currentTab === 'check') renderChecklist();
+  if (currentTab === 'stops') renderStops();
+}
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.overlay').forEach(o => {
   o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
 });
 
-// ============================================================
-//  MAP
-// ============================================================
+// ── MAP ───────────────────────────────────────────────────
 function initMap() {
   if (mapInst) { mapInst.invalidateSize(); return; }
-  mapInst = L.map('map', { zoomControl: false, attributionControl: false }).setView([52, 15], 4);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(mapInst);
+  mapInst = L.map('map', { zoomControl:false, attributionControl:false }).setView([52,15], 4);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom:19 }).addTo(mapInst);
 }
 
-function renderMapStops() {
+function renderMap() {
   if (!mapInst || !state) return;
   mapLayers.forEach(m => { try { mapInst.removeLayer(m); } catch(e){} });
   mapLayers = [];
-  const pin = col => L.divIcon({
-    html: `<div style="width:14px;height:14px;border-radius:50%;background:${col};border:2.5px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3)"></div>`,
-    className:'', iconSize:[14,14], iconAnchor:[7,7]
+
+  const mkPin = col => L.divIcon({
+    html: `<div style="width:10px;height:10px;border-radius:50%;background:${col};border:2px solid rgba(255,255,255,0.15);box-shadow:0 0 0 1px ${col}40;"></div>`,
+    className:'', iconSize:[10,10], iconAnchor:[5,5]
   });
+
   const coords = [];
   (state.stops || []).forEach(s => {
-    if (s.lat == null || s.lng == null) return;
-    const col = s.isHome ? '#6366F1' : '#C8963C';
-    const m = L.marker([s.lat, s.lng], { icon: pin(col) }).addTo(mapInst)
-      .bindPopup(`<strong style="font-family:sans-serif">${s.city}</strong><br><span style="font-size:12px;font-family:sans-serif">${fmtDate(s.from)} → ${fmtDate(s.to)}</span>`);
+    if (s.lat == null) return;
+    const col = s.isHome ? '#5B5BD6' : '#C8963C';
+    const m = L.marker([s.lat, s.lng], { icon: mkPin(col) }).addTo(mapInst)
+      .bindPopup(`<span style="font-family:sans-serif;font-size:13px;font-weight:600;">${s.city}</span><br><span style="font-family:sans-serif;font-size:11px;color:#888;">${fmtDate(s.from)} — ${fmtDate(s.to)}</span>`);
     mapLayers.push(m); coords.push([s.lat, s.lng]);
   });
+
   if (coords.length > 1) {
-    const line = L.polyline(coords, { color:'#C8963C', weight:2.5, dashArray:'6 7', opacity:0.75 }).addTo(mapInst);
+    const line = L.polyline(coords, { color:'#C8963C', weight:2, dashArray:'5 8', opacity:0.6 }).addTo(mapInst);
     mapLayers.push(line);
-    mapInst.fitBounds(line.getBounds(), { padding:[32,32] });
+    mapInst.fitBounds(line.getBounds(), { padding:[28,28] });
   }
-  const el = document.getElementById('stops-list');
+
   const stops = state.stops || [];
+  const countEl = document.getElementById('map-count');
+  if (countEl) countEl.textContent = stops.length === 1 ? '1 stopp' : stops.length + ' stopp';
+
+  const el = document.getElementById('stops-list');
   if (!stops.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">🗺️</div><div class="empty-title">Inga stopp än</div><div class="empty-desc">Tryck + för att lägga till en stad</div></div>';
+    el.innerHTML = '<div class="empty"><div class="empty-title">Inga stopp planerade</div><div class="empty-desc">Tryck + för att lägga till en stad</div></div>';
     return;
   }
   el.innerHTML = stops.map(s => `
     <div class="stop-chip">
-      <span class="stop-chip-icon">${s.isHome ? '🏠' : '📍'}</span>
+      <div class="stop-chip-dot" style="background:${s.isHome ? '#5B5BD6' : '#C8963C'};"></div>
       <div class="stop-chip-info">
         <div class="stop-chip-name">${s.city}</div>
-        <div class="stop-chip-dates">${fmtDate(s.from)} — ${fmtDate(s.to)}</div>
+        <div class="stop-chip-date">${fmtDate(s.from)} — ${fmtDate(s.to)}</div>
       </div>
-      ${s.isHome ? '' : `<button class="stop-chip-del" onclick="removeStop('${s.id}')">✕</button>`}
+      ${s.isHome ? '' : `<button class="stop-chip-del" onclick="removeStop('${s.id}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>`}
     </div>
   `).join('');
-  document.getElementById('map-sub').textContent = stops.length + ' stopp planerade';
 }
 
 async function geocodeAndAdd() {
   const city = document.getElementById('in-city').value.trim();
   const from = document.getElementById('in-from').value;
   const to   = document.getElementById('in-to').value;
-  if (!city) { showGeoStatus('⚠️ Ange en stad'); return; }
+  if (!city) { document.getElementById('geo-hint').textContent = 'Ange en stad.'; return; }
   const btn = document.getElementById('stop-add-btn');
   btn.textContent = 'Söker…'; btn.disabled = true;
-  showGeoStatus('🔍 Söker koordinater…');
+  document.getElementById('geo-hint').textContent = 'Söker koordinater…';
   let lat = null, lng = null;
   try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`, { headers: {'Accept-Language':'sv'} });
-    const d = await res.json();
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`);
+    const d = await r.json();
     if (d.length) { lat = parseFloat(d[0].lat); lng = parseFloat(d[0].lon); }
-    showGeoStatus(lat ? '✅ Hittad! Sparar…' : '⚠️ Hittades ej – läggs till utan karta');
+    document.getElementById('geo-hint').textContent = lat ? 'Hittad.' : 'Hittades inte — läggs till utan kartpin.';
   } catch(e) {
-    showGeoStatus('⚠️ Offline – läggs till utan kartpin');
+    document.getElementById('geo-hint').textContent = 'Offline — läggs till utan kartpin.';
   }
   if (!state.stops) state.stops = [];
-  state.stops.push({ id: Date.now().toString(), city, from, to, lat, lng, activities: [] });
+  state.stops.push({ id: Date.now().toString(), city, from, to, lat, lng, activities:[] });
   save();
-  btn.textContent = 'Lägg till stopp'; btn.disabled = false;
+  btn.textContent = 'Lägg till'; btn.disabled = false;
   setTimeout(() => {
     closeModal('modal-stop');
-    document.getElementById('in-city').value = '';
-    document.getElementById('in-from').value = '';
-    document.getElementById('in-to').value   = '';
-    showGeoStatus('');
-    if (mapInst) renderMapStops();
-    updateHomeStats();
-  }, 600);
+    ['in-city','in-from','in-to'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('geo-hint').textContent = '';
+    if (mapInst) renderMap();
+    updateStats();
+  }, 500);
 }
-
-function showGeoStatus(msg) { document.getElementById('geo-status').textContent = msg; }
 
 function removeStop(id) {
-  state.stops = (state.stops || []).filter(s => s.id !== id);
-  save(); if (mapInst) renderMapStops(); renderStopsDetail(); updateHomeStats();
+  state.stops = (state.stops||[]).filter(s => s.id !== id);
+  save(); if (mapInst) renderMap(); renderStops(); updateStats();
 }
 
-// ============================================================
-//  CHECKLIST
-// ============================================================
+// ── CHECKLIST ─────────────────────────────────────────────
 function renderChecklist() {
   if (!state) return;
-  const cl = state.checklist || [];
-  const total = cl.length, done = cl.filter(i => i.done).length;
-  const pct = total ? Math.round(done / total * 100) : 0;
-  document.getElementById('check-sub').textContent = done + ' av ' + total + ' klara';
+  const cl    = state.checklist || [];
+  const done  = cl.filter(i => i.done).length;
+  const total = cl.length;
+  const pct   = total ? Math.round(done/total*100) : 0;
+
+  document.getElementById('check-count').textContent = done + ' / ' + total;
   document.getElementById('check-bar').style.width = pct + '%';
+
+  const el   = document.getElementById('checklist');
   const cats = [...new Set(cl.map(i => i.cat))];
-  const el = document.getElementById('checklist');
+
   if (!total) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">Listan är tom</div><div class="empty-desc">Tryck + för att lägga till en uppgift</div></div>';
+    el.innerHTML = '<div class="empty"><div class="empty-title">Listan är tom</div><div class="empty-desc">Tryck + för att lägga till en uppgift</div></div>';
     return;
   }
   el.innerHTML = cats.map(cat => {
     const items = cl.filter(i => i.cat === cat);
-    return `<div class="sec-label">${cat}</div>` + items.map(item => `
+    return `<div class="sec"><div class="sec-lbl">${cat}</div></div>` + items.map(item => `
       <div class="check-item${item.done?' done':''}" onclick="toggleCheck('${item.id}')">
-        <div class="check-circle">${item.done ? '✓' : ''}</div>
-        <span class="check-item-text">${item.text}</span>
-        <button class="check-del" onclick="event.stopPropagation();deleteCheck('${item.id}')">✕</button>
+        <div class="check-box">
+          <div class="check-box-inner">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+        </div>
+        <span class="check-text">${item.text}</span>
+        <button class="check-del" onclick="event.stopPropagation();deleteCheck('${item.id}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
     `).join('');
   }).join('');
-  updateHomeStats();
+  updateStats();
 }
 
 function addCheck() {
@@ -543,31 +916,37 @@ function addCheck() {
   const cat  = document.getElementById('in-cat').value;
   if (!text) return;
   if (!state.checklist) state.checklist = [];
-  state.checklist.push({ id: Date.now().toString(), text, cat, done: false });
+  state.checklist.push({ id: Date.now().toString(), text, cat, done:false });
   save(); closeModal('modal-check');
   document.getElementById('in-check').value = '';
   renderChecklist();
 }
 
 function toggleCheck(id) {
-  const item = (state.checklist || []).find(i => i.id === id);
+  const item = (state.checklist||[]).find(i => i.id === id);
   if (item) { item.done = !item.done; save(); renderChecklist(); }
 }
 
 function deleteCheck(id) {
-  state.checklist = (state.checklist || []).filter(i => i.id !== id);
+  state.checklist = (state.checklist||[]).filter(i => i.id !== id);
   save(); renderChecklist();
 }
 
-// ============================================================
-//  STOPS DETAIL
-// ============================================================
-function renderStopsDetail() {
+// ── STOPS DETAIL ──────────────────────────────────────────
+const ACT_LABELS = {
+  boende:'Boende', mat:'Mat', aktivitet:'Aktivitet',
+  transport:'Transport', 'sevärdhet':'Sevärdhet', noje:'Nöje', tips:'Tips',
+  // backwards compat with old emoji keys:
+  '🏨':'Boende','🍽️':'Mat','🎡':'Aktivitet','🚂':'Transport',
+  '📸':'Sevärdhet','🎵':'Nöje','💡':'Tips'
+};
+
+function renderStops() {
   if (!state) return;
-  const el = document.getElementById('stops-detail');
+  const el    = document.getElementById('stops-detail');
   const stops = state.stops || [];
   if (!stops.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">📍</div><div class="empty-title">Inga stopp planerade</div><div class="empty-desc">Gå till Karta och lägg till städer</div></div>';
+    el.innerHTML = '<div class="empty"><div class="empty-title">Inga stopp planerade</div><div class="empty-desc">Gå till Karta och lägg till städer</div></div>';
     return;
   }
   el.innerHTML = stops.map(s => `
@@ -576,18 +955,30 @@ function renderStopsDetail() {
         <div>
           <div class="stop-card-city">${s.city}</div>
           <div class="stop-card-date">${fmtDate(s.from)} — ${fmtDate(s.to)}</div>
+          ${s.isHome ? '<div class="stop-home-tag">Startpunkt</div>' : ''}
         </div>
-        <span class="stop-card-emoji">${s.isHome ? '🏠' : '📍'}</span>
       </div>
       <div class="stop-card-body">
-        ${(s.activities||[]).length ? (s.activities||[]).map(a => `
-          <div class="activity-row">
-            <span class="act-emoji">${a.type}</span>
-            <span class="act-text">${a.text}</span>
-            <button class="act-del" onclick="deleteActivity('${s.id}','${a.id}')">✕</button>
-          </div>
-        `).join('') : '<p style="font-size:13px;color:var(--text-3);padding:4px 0 8px;">Inga aktiviteter än</p>'}
-        <button class="act-add-btn" onclick="openActivityModal('${s.id}')">+ Lägg till aktivitet</button>
+        ${!(s.activities||[]).length
+          ? `<div style="padding:14px 16px;font-size:12px;color:var(--text-3);">Inga aktiviteter tillagda</div>`
+          : (s.activities||[]).map(a => `
+            <div class="act-row">
+              <span class="act-tag">${ACT_LABELS[a.type] || a.type}</span>
+              <span class="act-text">${a.text}</span>
+              <button class="act-del" onclick="deleteActivity('${s.id}','${a.id}')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+          `).join('')
+        }
+        <button class="act-add" onclick="openActivityModal('${s.id}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Lägg till aktivitet
+        </button>
       </div>
     </div>
   `).join('');
@@ -595,7 +986,7 @@ function renderStopsDetail() {
 
 function openActivityModal(stopId) {
   const sel = document.getElementById('in-act-stop');
-  sel.innerHTML = (state.stops || []).map(s => `<option value="${s.id}">${s.city}</option>`).join('');
+  sel.innerHTML = (state.stops||[]).map(s => `<option value="${s.id}">${s.city}</option>`).join('');
   if (stopId) sel.value = stopId;
   openModal('modal-activity');
 }
@@ -605,7 +996,7 @@ function addActivity() {
   const text   = document.getElementById('in-act-text').value.trim();
   const type   = document.getElementById('in-act-type').value;
   if (!text) return;
-  const stop = (state.stops || []).find(s => s.id === stopId);
+  const stop = (state.stops||[]).find(s => s.id === stopId);
   if (stop) {
     if (!stop.activities) stop.activities = [];
     stop.activities.push({ id: Date.now().toString(), text, type });
@@ -613,40 +1004,34 @@ function addActivity() {
   }
   closeModal('modal-activity');
   document.getElementById('in-act-text').value = '';
-  renderStopsDetail();
+  renderStops();
 }
 
 function deleteActivity(stopId, actId) {
-  const stop = (state.stops || []).find(s => s.id === stopId);
-  if (stop) { stop.activities = (stop.activities||[]).filter(a => a.id !== actId); save(); renderStopsDetail(); }
+  const stop = (state.stops||[]).find(s => s.id === stopId);
+  if (stop) { stop.activities = (stop.activities||[]).filter(a => a.id !== actId); save(); renderStops(); }
 }
 
-// ============================================================
-//  UTILITIES
-// ============================================================
+// ── UTILS ─────────────────────────────────────────────────
 function fmtDate(str) {
   if (!str) return '–';
-  const d = new Date(str + 'T12:00:00');
-  return d.toLocaleDateString('sv-SE', { day:'numeric', month:'short' });
+  return new Date(str + 'T12:00:00').toLocaleDateString('sv-SE', { day:'numeric', month:'short' });
 }
 
 function updateCountdown() {
-  const diff = Math.ceil((new Date('2026-08-02T00:00:00') - new Date()) / 864e5);
-  const el = document.getElementById('cd-num');
+  const diff = Math.ceil((new Date('2026-08-02') - new Date()) / 864e5);
+  const el   = document.getElementById('cd-num');
   if (el) el.textContent = Math.max(0, diff);
 }
 
-function updateHomeStats() {
+function updateStats() {
   if (!state) return;
   const se = document.getElementById('home-stops');
   const ce = document.getElementById('home-checks');
-  if (se) se.textContent = (state.stops || []).length;
-  if (ce) ce.textContent = (state.checklist || []).filter(i => i.done).length;
+  if (se) se.textContent = (state.stops||[]).length;
+  if (ce) ce.textContent = (state.checklist||[]).filter(i => i.done).length;
 }
 
-// ============================================================
-//  INIT
-// ============================================================
 updateCountdown();
 setInterval(updateCountdown, 60000);
 </script>
