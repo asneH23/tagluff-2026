@@ -84,6 +84,8 @@
     .add-act-section{margin-top:4px;display:flex;flex-direction:column;gap:8px}
     .btn-add-act{width:100%;padding:13px;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r-sm);color:var(--t1);font-size:14px;font-weight:600;font-family:var(--font);cursor:pointer;transition:background .15s}
     .btn-add-act:active{background:rgba(255,255,255,0.12)}
+    .btn-del-city{width:100%;margin-top:24px;padding:13px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r-sm);color:#EF4444;font-size:14px;font-weight:600;font-family:var(--font);cursor:pointer;transition:background .15s}
+    .btn-del-city:active{background:rgba(239,68,68,0.18)}
 
     /* MAP */
     #map{height:300px;width:100%}
@@ -448,7 +450,8 @@ function buildDetailContent(stop){
       +'</select>'
       +'<input class="finput" id="detail-act-text" placeholder="Beskrivning..." style="margin-top:0"/>'
       +'<button class="btn-add-act" id="btn-add-act">Lägg till</button>'
-    +'</div>';
+    +'</div>'
+    +(stop.isHome?'':'<button class="btn-del-city" id="btn-del-city">Ta bort stad</button>');
 
   // Notes: save on blur
   document.getElementById('detail-notes').addEventListener('input',function(){
@@ -653,6 +656,7 @@ document.getElementById('modal-city-detail').addEventListener('click',function(e
   var del=e.target.closest('.act-del');
   if(del){deleteActFromDetail(del.getAttribute('data-id'));return;}
   if(e.target.id==='btn-add-act'){addActFromDetail();return;}
+  if(e.target.id==='btn-del-city'){removeStop(currentDetailStopId);closeModal('modal-city-detail');return;}
 });
 document.getElementById('checklist').addEventListener('click',function(e){
   var del=e.target.closest('.check-del');
