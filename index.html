@@ -298,6 +298,7 @@ const ACCENTS=[
 const ACT_LABELS={boende:"Boende",mat:"Mat",aktivitet:"Aktivitet",transport:"Transport",sevärdhet:"Sevärdhet",nöje:"Nöje",tips:"Tips","sevärdhet":"Sevärdhet"};
 
 let state=null,mapInst=null,mapLayers=[],currentTab="cities",saveTimer=null,currentDetailStopId=null,notesTimer=null;
+let _connTimeout=null;
 
 function setSync(s){
   const p=document.getElementById("sync-pill"),t=document.getElementById("sync-txt");
@@ -305,14 +306,24 @@ function setSync(s){
   t.textContent=s==="online"?"Synkad":s==="offline"?"Offline":"Synkar";
 }
 
+// Fallback: if Firebase hasn't responded in 6s, load from cache
+_connTimeout=setTimeout(()=>{
+  if(!state){
+    try{state=JSON.parse(localStorage.getItem("tg26")||"null")||JSON.parse(JSON.stringify(DEFAULTS));}catch(e){state=JSON.parse(JSON.stringify(DEFAULTS));}
+    setSync("offline");refreshTab();updateCountdown();
+  }
+},6000);
+
 tripRef.onSnapshot(snap=>{
+  clearTimeout(_connTimeout);
   state=snap.exists?snap.data():JSON.parse(JSON.stringify(DEFAULTS));
   if(!snap.exists)tripRef.set(DEFAULTS);
   setSync("online");refreshTab();updateCountdown();
-},()=>{
+},err=>{
+  clearTimeout(_connTimeout);
   setSync("offline");
-  if(!state){try{state=JSON.parse(localStorage.getItem("tg26")||"null")||JSON.parse(JSON.stringify(DEFAULTS));}catch(e){state=JSON.parse(JSON.stringify(DEFAULTS));}
-  refreshTab();updateCountdown();}
+  try{state=JSON.parse(localStorage.getItem("tg26")||"null")||JSON.parse(JSON.stringify(DEFAULTS));}catch(e){state=JSON.parse(JSON.stringify(DEFAULTS));}
+  refreshTab();updateCountdown();
 });
 
 function save(){
