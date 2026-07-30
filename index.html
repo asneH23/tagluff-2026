@@ -86,6 +86,9 @@
     .btn-add-act:active{background:rgba(255,255,255,0.12)}
     .btn-del-city{width:100%;margin-top:24px;padding:13px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r-sm);color:#EF4444;font-size:14px;font-weight:600;font-family:var(--font);cursor:pointer;transition:background .15s}
     .btn-del-city:active{background:rgba(239,68,68,0.18)}
+    .date-edit-row{display:flex;gap:10px;margin:14px 0 4px}
+    .date-edit-grp{flex:1;display:flex;flex-direction:column;gap:5px}
+    .date-inp{color-scheme:dark}
 
     /* MAP */
     #map{height:300px;width:100%}
@@ -393,7 +396,7 @@ function renderCities(){
           +'<div class="city-card-name">'+s.city+'</div>'
           +'<span class="city-card-badge" style="color:'+acc.c+';background:'+acc.bg+';border-color:'+acc.bd+'">'+(s.isHome?'START':'STOPP '+n)+'</span>'
         +'</div>'
-        +'<div class="city-card-dates">'+fmtDate(s.from)+' — '+fmtDate(s.to)+'</div>'
+        +(s.isHome?'':'<div class="city-card-dates">'+fmtDate(s.from)+' \u2014 '+fmtDate(s.to)+'</div>')
         +'<div class="city-card-meta">'+actsText+'</div>'
       +'</div>'
       +'<div class="city-card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>'
@@ -429,10 +432,11 @@ function buildDetailContent(stop){
     '<div class="city-detail-header">'
       +'<div>'
         +'<div class="city-detail-name">'+stop.city+'</div>'
-        +'<div class="city-detail-date">'+fmtDate(stop.from)+' — '+fmtDate(stop.to)+'</div>'
+        +(stop.isHome?'':'<div class="city-detail-date">'+fmtDate(stop.from)+' — '+fmtDate(stop.to)+'</div>')
       +'</div>'
       +'<span class="city-card-badge" style="color:'+acc.c+';background:'+acc.bg+';border-color:'+acc.bd+'">'+(stop.isHome?'START':'STOPP '+n)+'</span>'
     +'</div>'
+    +(stop.isHome?'':'<div class="date-edit-row"><div class="date-edit-grp"><label class="form-lbl">Ankomst</label><input type="date" class="finput date-inp" id="detail-from" value="'+(stop.from||'')+'" /></div><div class="date-edit-grp"><label class="form-lbl">Avresa</label><input type="date" class="finput date-inp" id="detail-to" value="'+(stop.to||'')+'" /></div></div>')
     +'<div class="sec" style="margin:20px 0 10px"><div class="sec-lbl">Anteckningar</div><div class="sec-line"></div></div>'
     +'<textarea class="notes-area" id="detail-notes" placeholder="Tips, adresser, bokningsnummer...">'+(stop.notes||'')+'</textarea>'
     +'<div class="sec" style="margin:20px 0 10px"><div class="sec-lbl">Aktiviteter</div><div class="sec-line"></div></div>'
@@ -453,7 +457,7 @@ function buildDetailContent(stop){
     +'</div>'
     +(stop.isHome?'':'<button class="btn-del-city" id="btn-del-city">Ta bort stad</button>');
 
-  // Notes: save on blur
+  // Notes: save on input (debounced)
   document.getElementById('detail-notes').addEventListener('input',function(){
     const val=this.value;
     clearTimeout(notesTimer);
@@ -462,6 +466,18 @@ function buildDetailContent(stop){
       if(s){s.notes=val;save();}
     },1500);
   });
+  // Dates: save on change and re-render card
+  var fromEl=document.getElementById('detail-from');
+  var toEl=document.getElementById('detail-to');
+  function saveDates(){
+    const s=(state.stops||[]).find(function(x){return x.id===currentDetailStopId;});
+    if(!s)return;
+    if(fromEl)s.from=fromEl.value;
+    if(toEl)s.to=toEl.value;
+    save(); renderCities();
+  }
+  if(fromEl)fromEl.addEventListener('change',saveDates);
+  if(toEl)toEl.addEventListener('change',saveDates);
 }
 
 function refreshDetailActsList(){
