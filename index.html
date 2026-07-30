@@ -261,325 +261,415 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 firebase.initializeApp({
-  apiKey:"AIzaSyCS7frMIpfvfO29EWmUXuhD2tMmhLenKCA",
-  authDomain:"tagluff-2026.firebaseapp.com",
-  projectId:"tagluff-2026",
-  storageBucket:"tagluff-2026.firebasestorage.app",
-  messagingSenderId:"559457911138",
-  appId:"1:559457911138:web:2bbfd432ff2cfaf8572c3b"
+  apiKey:'AIzaSyCS7frMIpfvfO29EWmUXuhD2tMmhLenKCA',
+  authDomain:'tagluff-2026.firebaseapp.com',
+  projectId:'tagluff-2026',
+  storageBucket:'tagluff-2026.firebasestorage.app',
+  messagingSenderId:'559457911138',
+  appId:'1:559457911138:web:2bbfd432ff2cfaf8572c3b'
 });
-const db=firebase.firestore(),tripRef=db.collection("trips").doc("tagluff2026");
+const db=firebase.firestore(),tripRef=db.collection('trips').doc('tagluff2026');
 
 const DEFAULTS={
-  stops:[{id:"sto",city:"Stockholm",from:"2026-08-02",to:"2026-08-02",lat:59.3293,lng:18.0686,activities:[],isHome:true,notes:""}],
+  stops:[{id:'sto',city:'Stockholm',from:'2026-08-02',to:'2026-08-02',lat:59.3293,lng:18.0686,activities:[],isHome:true,notes:''}],
   checklist:[
-    {id:"c1",text:"Köp Eurail-kort",cat:"Före resan",done:false},
-    {id:"c2",text:"Ladda ner offline-kartor",cat:"Före resan",done:false},
-    {id:"c3",text:"Bokningsnummer på ett ställe",cat:"Före resan",done:false},
-    {id:"c4",text:"Kolla EU-sjukkort (EHIC)",cat:"Före resan",done:false},
-    {id:"c5",text:"Pass",cat:"Packlista",done:false},
-    {id:"c6",text:"Laddare + universaladapter",cat:"Packlista",done:false},
-    {id:"c7",text:"Powerbank",cat:"Packlista",done:false},
-    {id:"c8",text:"Regnjacka",cat:"Packlista",done:false},
-    {id:"c9",text:"Kontanter (euro)",cat:"Packlista",done:false},
+    {id:'c1',text:'Köp Eurail-kort',cat:'Före resan',done:false},
+    {id:'c2',text:'Ladda ner offline-kartor',cat:'Före resan',done:false},
+    {id:'c3',text:'Bokningsnummer på ett ställe',cat:'Före resan',done:false},
+    {id:'c4',text:'Kolla EU-sjukkort (EHIC)',cat:'Före resan',done:false},
+    {id:'c5',text:'Pass',cat:'Packlista',done:false},
+    {id:'c6',text:'Laddare + universaladapter',cat:'Packlista',done:false},
+    {id:'c7',text:'Powerbank',cat:'Packlista',done:false},
+    {id:'c8',text:'Regnjacka',cat:'Packlista',done:false},
+    {id:'c9',text:'Kontanter (euro)',cat:'Packlista',done:false},
   ]
 };
 
 const ACCENTS=[
-  {c:"#6366F1",bg:"rgba(99,102,241,0.10)",bd:"rgba(99,102,241,0.24)"},
-  {c:"#D4A853",bg:"rgba(212,168,83,0.10)",bd:"rgba(212,168,83,0.24)"},
-  {c:"#10B981",bg:"rgba(16,185,129,0.10)",bd:"rgba(16,185,129,0.24)"},
-  {c:"#EF4444",bg:"rgba(239,68,68,0.10)",bd:"rgba(239,68,68,0.24)"},
-  {c:"#8B5CF6",bg:"rgba(139,92,246,0.10)",bd:"rgba(139,92,246,0.24)"},
-  {c:"#0EA5E9",bg:"rgba(14,165,233,0.10)",bd:"rgba(14,165,233,0.24)"},
-  {c:"#F59E0B",bg:"rgba(245,158,11,0.10)",bd:"rgba(245,158,11,0.24)"},
+  {c:'#6366F1',bg:'rgba(99,102,241,0.10)',bd:'rgba(99,102,241,0.24)'},
+  {c:'#D4A853',bg:'rgba(212,168,83,0.10)',bd:'rgba(212,168,83,0.24)'},
+  {c:'#10B981',bg:'rgba(16,185,129,0.10)',bd:'rgba(16,185,129,0.24)'},
+  {c:'#EF4444',bg:'rgba(239,68,68,0.10)',bd:'rgba(239,68,68,0.24)'},
+  {c:'#8B5CF6',bg:'rgba(139,92,246,0.10)',bd:'rgba(139,92,246,0.24)'},
+  {c:'#0EA5E9',bg:'rgba(14,165,233,0.10)',bd:'rgba(14,165,233,0.24)'},
+  {c:'#F59E0B',bg:'rgba(245,158,11,0.10)',bd:'rgba(245,158,11,0.24)'},
 ];
 
-const ACT_LABELS={boende:"Boende",mat:"Mat",aktivitet:"Aktivitet",transport:"Transport",sevärdhet:"Sevärdhet",nöje:"Nöje",tips:"Tips","sevärdhet":"Sevärdhet"};
+const ACT_LABELS={boende:'Boende',mat:'Mat',aktivitet:'Aktivitet',transport:'Transport',
+  'sevärdhet':'Sevärdhet',sevardhet:'Sevärdhet','nöje':'Nöje',noje:'Nöje',tips:'Tips'};
 
-let state=null,mapInst=null,mapLayers=[],currentTab="cities",saveTimer=null,currentDetailStopId=null,notesTimer=null;
-let _connTimeout=null;
+let state=null,mapInst=null,mapLayers=[],currentTab='cities',saveTimer=null,currentDetailStopId=null,notesTimer=null;
+
+// OFFLINE-FIRST: render immediately from cache, sync Firebase in background
+try { state=JSON.parse(localStorage.getItem('tg26')||'null')||JSON.parse(JSON.stringify(DEFAULTS)); }
+catch(e){ state=JSON.parse(JSON.stringify(DEFAULTS)); }
 
 function setSync(s){
-  const p=document.getElementById("sync-pill"),t=document.getElementById("sync-txt");
-  if(!p)return;p.className="sync-pill "+s;
-  t.textContent=s==="online"?"Synkad":s==="offline"?"Offline":"Synkar";
+  const p=document.getElementById('sync-pill'),t=document.getElementById('sync-txt');
+  if(!p)return; p.className='sync-pill '+s;
+  t.textContent=s==='online'?'Synkad':s==='offline'?'Offline':'Synkar';
 }
 
-// Fallback: if Firebase hasn't responded in 6s, load from cache
-_connTimeout=setTimeout(()=>{
-  if(!state){
-    try{state=JSON.parse(localStorage.getItem("tg26")||"null")||JSON.parse(JSON.stringify(DEFAULTS));}catch(e){state=JSON.parse(JSON.stringify(DEFAULTS));}
-    setSync("offline");refreshTab();updateCountdown();
-  }
-},6000);
-
-tripRef.onSnapshot(snap=>{
-  clearTimeout(_connTimeout);
+// Connect Firebase — update state when data arrives
+tripRef.onSnapshot(function(snap){
   state=snap.exists?snap.data():JSON.parse(JSON.stringify(DEFAULTS));
   if(!snap.exists)tripRef.set(DEFAULTS);
-  setSync("online");refreshTab();updateCountdown();
-},err=>{
-  clearTimeout(_connTimeout);
-  setSync("offline");
-  try{state=JSON.parse(localStorage.getItem("tg26")||"null")||JSON.parse(JSON.stringify(DEFAULTS));}catch(e){state=JSON.parse(JSON.stringify(DEFAULTS));}
-  refreshTab();updateCountdown();
+  setSync('online'); refreshTab(); updateCountdown();
+}, function(err){
+  setSync('offline');
+  // Keep using the already-loaded local state
 });
 
 function save(){
-  if(!state)return;setSync("syncing");
-  try{localStorage.setItem("tg26",JSON.stringify(state));}catch(e){}
+  if(!state)return; setSync('syncing');
+  try{localStorage.setItem('tg26',JSON.stringify(state));}catch(e){}
   clearTimeout(saveTimer);
-  saveTimer=setTimeout(()=>tripRef.set(state).then(()=>setSync("online")).catch(()=>setSync("offline")),500);
+  saveTimer=setTimeout(function(){
+    tripRef.set(state).then(function(){setSync('online');}).catch(function(){setSync('offline');});
+  },500);
 }
 
 function goTo(tab){
-  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
-  document.getElementById("screen-"+tab).classList.add("active");
-  document.getElementById("nav-"+tab).classList.add("active");
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('screen-'+tab).classList.add('active');
+  document.getElementById('nav-'+tab).classList.add('active');
   currentTab=tab;
-  document.getElementById("fab").style.display="flex";
-  if(tab==="map"){setTimeout(initMap,80);if(state)renderMap();}
-  if(tab==="check"&&state)renderChecklist();
-  if(tab==="cities"&&state)renderCities();
+  document.getElementById('fab').style.display='flex';
+  if(tab==='map'){setTimeout(initMap,80);if(state)renderMap();}
+  if(tab==='check'&&state)renderChecklist();
+  if(tab==='cities'&&state)renderCities();
 }
 
 function fabAction(){
-  if(currentTab==="cities"||currentTab==="map")openModal("modal-add-city");
-  if(currentTab==="check")openModal("modal-check");
+  if(currentTab==='cities'||currentTab==='map')openModal('modal-add-city');
+  if(currentTab==='check')openModal('modal-check');
 }
 
 function refreshTab(){
-  if(currentTab==="cities")renderCities();
-  if(currentTab==="map"&&mapInst)renderMap();
-  if(currentTab==="check")renderChecklist();
+  if(currentTab==='cities')renderCities();
+  if(currentTab==='map'&&mapInst)renderMap();
+  if(currentTab==='check')renderChecklist();
 }
 
-function openModal(id){document.getElementById(id).classList.add("open");}
-function closeModal(id){document.getElementById(id).classList.remove("open");}
-document.querySelectorAll(".overlay").forEach(o=>o.addEventListener("click",e=>{if(e.target===o)o.classList.remove("open");}));
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(function(o){
+  o.addEventListener('click',function(e){if(e.target===o)o.classList.remove('open');});
+});
 
-/* CITIES */
+/* ---- ACCENT HELPER ---- */
+function getAccentIdx(stopId){
+  const stops=state.stops||[]; let nh=0;
+  for(var i=0;i<stops.length;i++){
+    const s=stops[i]; const n=s.isHome?0:++nh;
+    if(s.id===stopId)return{acc:ACCENTS[n===0?0:((n-1)%(ACCENTS.length-1))+1],n:n};
+  }
+  return{acc:ACCENTS[1],n:1};
+}
+
+/* ---- CITIES ---- */
 function renderCities(){
   updateCountdown();
   if(!state)return;
-  const el=document.getElementById("cities-list");
+  const el=document.getElementById('cities-list');
   const stops=state.stops||[];
-  if(!stops.length){el.innerHTML=emptyH("Inga städer planerade","Tryck + för att lägga till din första stad");return;}
-  const cards=[];
-  let nh=0;
-  for(const s of stops){
+  if(!stops.length){
+    el.innerHTML=emptyH('Inga städer planerade','Tryck + för att lägga till din första stad');
+    return;
+  }
+  let html='', nh=0;
+  for(var i=0;i<stops.length;i++){
+    const s=stops[i];
     const n=s.isHome?0:++nh;
     const acc=ACCENTS[n===0?0:((n-1)%(ACCENTS.length-1))+1];
     const actCount=(s.activities||[]).length;
-    const actsText=actCount===0?"Inga aktiviteter":actCount+(actCount===1?" aktivitet":" aktiviteter");
-    cards.push(
-      "<div class="city-card" onclick="openCityDetail('"+s.id+"')">" +
-      "<div class="city-card-accent" style="background:"+acc.c+""></div>" +
-      "<div class="city-card-body">" +
-        "<div class="city-card-top">" +
-          "<div class="city-card-name">"+s.city+"</div>" +
-          "<span class="city-card-badge" style="color:"+acc.c+";background:"+acc.bg+";border-color:"+acc.bd+"">"+(s.isHome?"START":"STOPP "+n)+"</span>" +
-        "</div>" +
-        "<div class="city-card-dates">"+fmtDate(s.from)+" — "+fmtDate(s.to)+"</div>" +
-        "<div class="city-card-meta">"+actsText+"</div>" +
-      "</div>" +
-      "<div class="city-card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>" +
-      "</div>"
-    );
+    const actsText=actCount===0?'Inga aktiviteter':actCount+(actCount===1?' aktivitet':' aktiviteter');
+    html+='<div class="city-card" data-id="'+s.id+'">'
+      +'<div class="city-card-accent" style="background:'+acc.c+'"></div>'
+      +'<div class="city-card-body">'
+        +'<div class="city-card-top">'
+          +'<div class="city-card-name">'+s.city+'</div>'
+          +'<span class="city-card-badge" style="color:'+acc.c+';background:'+acc.bg+';border-color:'+acc.bd+'">'+(s.isHome?'START':'STOPP '+n)+'</span>'
+        +'</div>'
+        +'<div class="city-card-dates">'+fmtDate(s.from)+' — '+fmtDate(s.to)+'</div>'
+        +'<div class="city-card-meta">'+actsText+'</div>'
+      +'</div>'
+      +'<div class="city-card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>'
+      +'</div>';
   }
-  el.innerHTML=cards.join("");
-}
-
-function getAccentForStop(stopId){
-  const stops=state.stops||[];let nh=0;
-  for(const s of stops){const n=s.isHome?0:++nh;if(s.id===stopId)return{acc:ACCENTS[n===0?0:((n-1)%(ACCENTS.length-1))+1],n};}
-  return{acc:ACCENTS[1],n:1};
+  el.innerHTML=html;
 }
 
 function openCityDetail(id){
   currentDetailStopId=id;
-  const stop=(state.stops||[]).find(s=>s.id===id);
+  const stop=(state.stops||[]).find(function(s){return s.id===id;});
   if(!stop)return;
   buildDetailContent(stop);
-  openModal("modal-city-detail");
+  openModal('modal-city-detail');
 }
 
 function buildDetailContent(stop){
-  const {acc,n}=getAccentForStop(stop.id);
+  const info=getAccentIdx(stop.id);
+  const acc=info.acc, n=info.n;
   const acts=stop.activities||[];
-  const actsHTML=acts.length===0
-    ?"<div class="no-acts-txt">Inga aktiviteter tillagda</div>"
-    :acts.map(a=>"<div class="act-row"><span class="act-tag">"+(ACT_LABELS[a.type]||a.type)+"</span><span class="act-txt">"+a.text+"</span><button class="act-del" onclick="deleteActFromDetail('"+a.id+"')">"+xSVG(12)+"</button></div>").join("");
+  let actsHtml=acts.length===0
+    ?'<div class="no-acts-txt">Inga aktiviteter tillagda</div>'
+    :'';
+  for(var i=0;i<acts.length;i++){
+    const a=acts[i];
+    actsHtml+='<div class="act-row">'
+      +'<span class="act-tag">'+(ACT_LABELS[a.type]||a.type)+'</span>'
+      +'<span class="act-txt">'+a.text+'</span>'
+      +'<button class="act-del" data-id="'+a.id+'">'+xSVG(12)+'</button>'
+      +'</div>';
+  }
+  document.getElementById('city-detail-content').innerHTML=
+    '<div class="city-detail-header">'
+      +'<div>'
+        +'<div class="city-detail-name">'+stop.city+'</div>'
+        +'<div class="city-detail-date">'+fmtDate(stop.from)+' — '+fmtDate(stop.to)+'</div>'
+      +'</div>'
+      +'<span class="city-card-badge" style="color:'+acc.c+';background:'+acc.bg+';border-color:'+acc.bd+'">'+(stop.isHome?'START':'STOPP '+n)+'</span>'
+    +'</div>'
+    +'<div class="sec" style="margin:20px 0 10px"><div class="sec-lbl">Anteckningar</div><div class="sec-line"></div></div>'
+    +'<textarea class="notes-area" id="detail-notes" placeholder="Tips, adresser, bokningsnummer...">'+(stop.notes||'')+'</textarea>'
+    +'<div class="sec" style="margin:20px 0 10px"><div class="sec-lbl">Aktiviteter</div><div class="sec-line"></div></div>'
+    +'<div id="detail-acts-list">'+actsHtml+'</div>'
+    +'<div class="sec" style="margin:20px 0 10px"><div class="sec-lbl">Lägg till aktivitet</div><div class="sec-line"></div></div>'
+    +'<div class="add-act-section">'
+      +'<select class="finput" id="detail-act-type">'
+        +'<option value="boende">Boende</option>'
+        +'<option value="mat">Mat &amp; dryck</option>'
+        +'<option value="aktivitet">Aktivitet</option>'
+        +'<option value="transport">Transport</option>'
+        +'<option value="sevardhet">Sevärdhet</option>'
+        +'<option value="noje">Nöje</option>'
+        +'<option value="tips">Tips</option>'
+      +'</select>'
+      +'<input class="finput" id="detail-act-text" placeholder="Beskrivning..." style="margin-top:0"/>'
+      +'<button class="btn-add-act" id="btn-add-act">Lägg till</button>'
+    +'</div>';
 
-  document.getElementById("city-detail-content").innerHTML=
-    "<div class="city-detail-header">" +
-      "<div>" +
-        "<div class="city-detail-name">"+stop.city+"</div>" +
-        "<div class="city-detail-date">"+fmtDate(stop.from)+" — "+fmtDate(stop.to)+"</div>" +
-      "</div>" +
-      "<span class="city-card-badge" style="color:"+acc.c+";background:"+acc.bg+";border-color:"+acc.bd+"">"+(stop.isHome?"START":"STOPP "+n)+"</span>" +
-    "</div>" +
-    "<div class="sec" style="margin:20px 0 10px"><div class="sec-lbl">Anteckningar</div><div class="sec-line"></div></div>" +
-    "<textarea class="notes-area" id="detail-notes" oninput="onNotesInput()" placeholder="Tips, adresser, bokningsnummer...">"+((stop.notes)||"")+"</textarea>" +
-    "<div class="sec" style="margin:20px 0 10px"><div class="sec-lbl">Aktiviteter</div><div class="sec-line"></div></div>" +
-    "<div id="detail-acts-list">"+actsHTML+"</div>" +
-    "<div class="sec" style="margin:20px 0 10px"><div class="sec-lbl">Lägg till aktivitet</div><div class="sec-line"></div></div>" +
-    "<div class="add-act-section">" +
-      "<select class="finput" id="detail-act-type"><option value="boende">Boende</option><option value="mat">Mat &amp; dryck</option><option value="aktivitet">Aktivitet</option><option value="transport">Transport</option><option value="sevärdhet">Sevärdhet</option><option value="nöje">Nöje</option><option value="tips">Tips</option></select>" +
-      "<input class="finput" id="detail-act-text" placeholder="Beskrivning..." style="margin-top:0"/>" +
-      "<button class="btn-add-act" onclick="addActFromDetail()">Lägg till</button>" +
-    "</div>";
-}
-
-function onNotesInput(){
-  const val=document.getElementById("detail-notes").value;
-  clearTimeout(notesTimer);
-  notesTimer=setTimeout(()=>{
-    const stop=(state.stops||[]).find(s=>s.id===currentDetailStopId);
-    if(stop){stop.notes=val;save();}
-  },1500);
+  // Notes: save on blur
+  document.getElementById('detail-notes').addEventListener('input',function(){
+    const val=this.value;
+    clearTimeout(notesTimer);
+    notesTimer=setTimeout(function(){
+      const s=(state.stops||[]).find(function(x){return x.id===currentDetailStopId;});
+      if(s){s.notes=val;save();}
+    },1500);
+  });
 }
 
 function refreshDetailActsList(){
-  const stop=(state.stops||[]).find(s=>s.id===currentDetailStopId);
+  const stop=(state.stops||[]).find(function(s){return s.id===currentDetailStopId;});
   if(!stop)return;
   const acts=stop.activities||[];
-  const el=document.getElementById("detail-acts-list");
-  if(el)el.innerHTML=acts.length===0
-    ?"<div class="no-acts-txt">Inga aktiviteter tillagda</div>"
-    :acts.map(a=>"<div class="act-row"><span class="act-tag">"+(ACT_LABELS[a.type]||a.type)+"</span><span class="act-txt">"+a.text+"</span><button class="act-del" onclick="deleteActFromDetail('"+a.id+"')">"+xSVG(12)+"</button></div>").join("");
+  const el=document.getElementById('detail-acts-list');
+  if(!el)return;
+  if(!acts.length){el.innerHTML='<div class="no-acts-txt">Inga aktiviteter tillagda</div>';return;}
+  let html='';
+  for(var i=0;i<acts.length;i++){
+    const a=acts[i];
+    html+='<div class="act-row">'
+      +'<span class="act-tag">'+(ACT_LABELS[a.type]||a.type)+'</span>'
+      +'<span class="act-txt">'+a.text+'</span>'
+      +'<button class="act-del" data-id="'+a.id+'">'+xSVG(12)+'</button>'
+      +'</div>';
+  }
+  el.innerHTML=html;
 }
 
 function addActFromDetail(){
-  const text=document.getElementById("detail-act-text").value.trim();
-  const type=document.getElementById("detail-act-type").value;
+  const textEl=document.getElementById('detail-act-text');
+  const text=textEl?textEl.value.trim():'';
+  const typeEl=document.getElementById('detail-act-type');
+  const type=typeEl?typeEl.value:'boende';
   if(!text)return;
-  const stop=(state.stops||[]).find(s=>s.id===currentDetailStopId);
+  const stop=(state.stops||[]).find(function(s){return s.id===currentDetailStopId;});
   if(stop){
     if(!stop.activities)stop.activities=[];
-    stop.activities.push({id:Date.now().toString(),text,type});
+    stop.activities.push({id:Date.now().toString(),text:text,type:type});
     save();
-    document.getElementById("detail-act-text").value="";
+    if(textEl)textEl.value='';
     refreshDetailActsList();
     renderCities();
   }
 }
 
 function deleteActFromDetail(actId){
-  const stop=(state.stops||[]).find(s=>s.id===currentDetailStopId);
-  if(stop){stop.activities=(stop.activities||[]).filter(a=>a.id!==actId);save();refreshDetailActsList();renderCities();}
+  const stop=(state.stops||[]).find(function(s){return s.id===currentDetailStopId;});
+  if(stop){
+    stop.activities=(stop.activities||[]).filter(function(a){return a.id!==actId;});
+    save(); refreshDetailActsList(); renderCities();
+  }
 }
 
-/* ADD CITY / GEOCODE */
+/* ---- ADD CITY ---- */
 async function geocodeAndAdd(){
-  const city=document.getElementById("in-city").value.trim();
-  const from=document.getElementById("in-from").value;
-  const to=document.getElementById("in-to").value;
-  if(!city){document.getElementById("geo-hint").textContent="Ange en stad.";return;}
-  const btn=document.getElementById("city-add-btn");btn.textContent="Söker…";btn.disabled=true;
-  document.getElementById("geo-hint").textContent="Söker koordinater…";
+  const city=document.getElementById('in-city').value.trim();
+  const from=document.getElementById('in-from').value;
+  const to=document.getElementById('in-to').value;
+  if(!city){document.getElementById('geo-hint').textContent='Ange en stad.';return;}
+  const btn=document.getElementById('city-add-btn');
+  btn.textContent='Söker…'; btn.disabled=true;
+  document.getElementById('geo-hint').textContent='Söker koordinater…';
   let lat=null,lng=null;
   try{
-    const r=await fetch("https://nominatim.openstreetmap.org/search?q="+encodeURIComponent(city)+"&format=json&limit=1");
-    const d=await r.json();if(d.length){lat=parseFloat(d[0].lat);lng=parseFloat(d[0].lon);}
-    document.getElementById("geo-hint").textContent=lat?"Hittad.":"Hittades inte.";
-  }catch(e){document.getElementById("geo-hint").textContent="Offline.";}
+    const r=await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(city)+'&format=json&limit=1');
+    const d=await r.json();
+    if(d.length){lat=parseFloat(d[0].lat);lng=parseFloat(d[0].lon);}
+    document.getElementById('geo-hint').textContent=lat?'Hittad.':'Hittades inte.';
+  }catch(e){document.getElementById('geo-hint').textContent='Offline.';}
   if(!state.stops)state.stops=[];
-  state.stops.push({id:Date.now().toString(),city,from,to,lat,lng,activities:[],notes:""});
-  save();btn.textContent="Lägg till";btn.disabled=false;
-  setTimeout(()=>{
-    closeModal("modal-add-city");
-    ["in-city","in-from","in-to"].forEach(id=>document.getElementById(id).value="");
-    document.getElementById("geo-hint").textContent="";
-    renderCities();if(mapInst)renderMap();
+  state.stops.push({id:Date.now().toString(),city:city,from:from,to:to,lat:lat,lng:lng,activities:[],notes:''});
+  save(); btn.textContent='Lägg till'; btn.disabled=false;
+  setTimeout(function(){
+    closeModal('modal-add-city');
+    ['in-city','in-from','in-to'].forEach(function(id){document.getElementById(id).value='';});
+    document.getElementById('geo-hint').textContent='';
+    renderCities(); if(mapInst)renderMap();
   },400);
 }
 
 function removeStop(id){
-  state.stops=(state.stops||[]).filter(s=>s.id!==id);
-  save();renderCities();if(mapInst)renderMap();
+  state.stops=(state.stops||[]).filter(function(s){return s.id!==id;});
+  save(); renderCities(); if(mapInst)renderMap();
 }
 
-/* MAP */
+/* ---- MAP ---- */
 function initMap(){
   if(mapInst){mapInst.invalidateSize();return;}
-  mapInst=L.map("map",{zoomControl:false,attributionControl:false}).setView([52,15],4);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{maxZoom:19}).addTo(mapInst);
-}
-function renderMap(){
-  if(!mapInst||!state)return;
-  mapLayers.forEach(m=>{try{mapInst.removeLayer(m);}catch(e){}});mapLayers=[];
-  const mkPin=col=>L.divIcon({
-    html:"<div style="width:11px;height:11px;border-radius:50%;background:"+col+";border:2px solid rgba(255,255,255,0.15);box-shadow:0 0 0 3px "+col+"30,0 2px 8px rgba(0,0,0,.4)"></div>",
-    className:"",iconSize:[11,11],iconAnchor:[5.5,5.5]
-  });
-  const coords=[];
-  (state.stops||[]).forEach(s=>{
-    if(s.lat==null)return;
-    const col=s.isHome?"#6366F1":"#D4A853";
-    const m=L.marker([s.lat,s.lng],{icon:mkPin(col)}).addTo(mapInst)
-      .bindPopup("<strong style="font-family:sans-serif;font-size:13px;">"+s.city+"</strong><br><span style="font-family:sans-serif;font-size:11px;color:#7A7B9A;">"+fmtDate(s.from)+" - "+fmtDate(s.to)+"</span>");
-    mapLayers.push(m);coords.push([s.lat,s.lng]);
-  });
-  if(coords.length>1){
-    const line=L.polyline(coords,{color:"#D4A853",weight:2,dashArray:"5 9",opacity:.55}).addTo(mapInst);
-    mapLayers.push(line);mapInst.fitBounds(line.getBounds(),{padding:[32,32]});
-  }
-  const stops=state.stops||[];
-  const cEl=document.getElementById("map-count");if(cEl)cEl.textContent=stops.length+" stopp";
-  const el=document.getElementById("stops-list");
-  if(!stops.length){el.innerHTML=emptyH("Inga städer","Tryck + för att lägga till en stad");return;}
-  el.innerHTML=stops.map(s=>{
-    let nh=0;const n=s.isHome?0:((state.stops||[]).slice(0,(state.stops||[]).indexOf(s)+1).filter(x=>!x.isHome).length);
-    const acc=ACCENTS[n===0?0:((n-1)%(ACCENTS.length-1))+1];
-    return "<div class="stop-chip">" +
-      "<div class="stop-chip-dot" style="background:"+acc.c+";box-shadow:0 0 6px "+acc.bg+""></div>" +
-      "<div class="stop-chip-info"><div class="stop-chip-name">"+s.city+"</div><div class="stop-chip-date">"+fmtDate(s.from)+" — "+fmtDate(s.to)+"</div></div>" +
-      (s.isHome?"":"<button class="stop-chip-del" onclick="removeStop('"+s.id+"')">"+xSVG(13)+"</button>") +
-      "</div>";
-  }).join("");
+  mapInst=L.map('map',{zoomControl:false,attributionControl:false}).setView([52,15],4);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(mapInst);
 }
 
-/* CHECKLIST */
+function renderMap(){
+  if(!mapInst||!state)return;
+  mapLayers.forEach(function(m){try{mapInst.removeLayer(m);}catch(e){}});
+  mapLayers=[];
+  function mkPin(col){
+    return L.divIcon({
+      html:'<div style="width:11px;height:11px;border-radius:50%;background:'+col+';border:2px solid rgba(255,255,255,0.15);box-shadow:0 0 0 3px '+col+'30,0 2px 8px rgba(0,0,0,.4)"></div>',
+      className:'',iconSize:[11,11],iconAnchor:[5.5,5.5]
+    });
+  }
+  const coords=[];
+  const stops=state.stops||[];
+  stops.forEach(function(s){
+    if(s.lat==null)return;
+    const col=s.isHome?'#6366F1':'#D4A853';
+    const m=L.marker([s.lat,s.lng],{icon:mkPin(col)}).addTo(mapInst)
+      .bindPopup('<strong>'+s.city+'</strong><br><small>'+fmtDate(s.from)+' — '+fmtDate(s.to)+'</small>');
+    mapLayers.push(m); coords.push([s.lat,s.lng]);
+  });
+  if(coords.length>1){
+    const line=L.polyline(coords,{color:'#D4A853',weight:2,dashArray:'5 9',opacity:.55}).addTo(mapInst);
+    mapLayers.push(line); mapInst.fitBounds(line.getBounds(),{padding:[32,32]});
+  }
+  const cEl=document.getElementById('map-count');
+  if(cEl)cEl.textContent=stops.length+' stopp';
+  const el=document.getElementById('stops-list');
+  if(!stops.length){
+    el.innerHTML=emptyH('Inga städer','Tryck + för att lägga till en stad');
+    return;
+  }
+  let nh=0, html='';
+  stops.forEach(function(s){
+    const n=s.isHome?0:++nh;
+    const acc=ACCENTS[n===0?0:((n-1)%(ACCENTS.length-1))+1];
+    html+='<div class="stop-chip">'
+      +'<div class="stop-chip-dot" style="background:'+acc.c+';box-shadow:0 0 6px '+acc.bg+'"></div>'
+      +'<div class="stop-chip-info"><div class="stop-chip-name">'+s.city+'</div><div class="stop-chip-date">'+fmtDate(s.from)+' — '+fmtDate(s.to)+'</div></div>'
+      +(s.isHome?'':'<button class="stop-chip-del" data-id="'+s.id+'">'+xSVG(13)+'</button>')
+      +'</div>';
+  });
+  el.innerHTML=html;
+}
+
+/* ---- CHECKLIST ---- */
 function renderChecklist(){
   if(!state)return;
-  const cl=state.checklist||[],done=cl.filter(i=>i.done).length,total=cl.length,pct=total?Math.round(done/total*100):0;
-  document.getElementById("check-count").textContent=done+" / "+total;
-  document.getElementById("check-bar").style.width=pct+"%";
-  const cats=[...new Set(cl.map(i=>i.cat))];
-  const el=document.getElementById("checklist");
-  if(!total){el.innerHTML=emptyH("Listan är tom","Tryck + för att lägga till en uppgift");return;}
-  el.innerHTML=cats.map(cat=>"<div class="sec"><div class="sec-lbl">"+cat+"</div><div class="sec-line"></div></div>"+
-    cl.filter(i=>i.cat===cat).map(item=>
-      "<div class="check-item"+(item.done?" done":"")+"" onclick="toggleCheck('"+item.id+"')">" +
-      "<div class="check-circle">"+(item.done?"<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#080918" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>":"")+"</div>" +
-      "<span class="check-txt">"+item.text+"</span>" +
-      "<button class="check-del" onclick="event.stopPropagation();deleteCheck('"+item.id+"')">"+xSVG(13)+"</button>" +
-      "</div>"
-    ).join("")).join("");
+  const cl=state.checklist||[], done=cl.filter(function(i){return i.done;}).length, total=cl.length;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('check-count').textContent=done+' / '+total;
+  document.getElementById('check-bar').style.width=pct+'%';
+  const el=document.getElementById('checklist');
+  if(!total){el.innerHTML=emptyH('Listan är tom','Tryck + för att lägga till en uppgift');return;}
+  const cats=[...new Set(cl.map(function(i){return i.cat;}))];
+  let html='';
+  cats.forEach(function(cat){
+    html+='<div class="sec"><div class="sec-lbl">'+cat+'</div><div class="sec-line"></div></div>';
+    cl.filter(function(i){return i.cat===cat;}).forEach(function(item){
+      html+='<div class="check-item'+(item.done?' done':'')+'" data-id="'+item.id+'">'
+        +'<div class="check-circle">'+(item.done?'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#080918" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>':'')+'</div>'
+        +'<span class="check-txt">'+item.text+'</span>'
+        +'<button class="check-del" data-id="'+item.id+'">'+xSVG(13)+'</button>'
+        +'</div>';
+    });
+  });
+  el.innerHTML=html;
 }
 
 function addCheck(){
-  const text=document.getElementById("in-check").value.trim(),cat=document.getElementById("in-cat").value;
-  if(!text)return;if(!state.checklist)state.checklist=[];
-  state.checklist.push({id:Date.now().toString(),text,cat,done:false});
-  save();closeModal("modal-check");document.getElementById("in-check").value="";renderChecklist();
+  const text=document.getElementById('in-check').value.trim();
+  const cat=document.getElementById('in-cat').value;
+  if(!text)return; if(!state.checklist)state.checklist=[];
+  state.checklist.push({id:Date.now().toString(),text:text,cat:cat,done:false});
+  save(); closeModal('modal-check'); document.getElementById('in-check').value=''; renderChecklist();
 }
-function toggleCheck(id){const item=(state.checklist||[]).find(i=>i.id===id);if(item){item.done=!item.done;save();renderChecklist();}}
-function deleteCheck(id){state.checklist=(state.checklist||[]).filter(i=>i.id!==id);save();renderChecklist();}
+function toggleCheck(id){
+  const item=(state.checklist||[]).find(function(i){return i.id===id;});
+  if(item){item.done=!item.done; save(); renderChecklist();}
+}
+function deleteCheck(id){
+  state.checklist=(state.checklist||[]).filter(function(i){return i.id!==id;});
+  save(); renderChecklist();
+}
 
-/* UTILS */
-function fmtDate(str){if(!str)return"–";return new Date(str+"T12:00:00").toLocaleDateString("sv-SE",{day:"numeric",month:"short"});}
+/* ---- UTILS ---- */
+function fmtDate(str){
+  if(!str)return '–';
+  return new Date(str+'T12:00:00').toLocaleDateString('sv-SE',{day:'numeric',month:'short'});
+}
 function updateCountdown(){
-  const diff=Math.ceil((new Date("2026-08-02")-new Date())/864e5);
-  const el=document.getElementById("cd-badge");if(el)el.textContent=Math.max(0,diff)+" dagar";
+  const diff=Math.ceil((new Date('2026-08-02')-new Date())/864e5);
+  const el=document.getElementById('cd-badge'); if(el)el.textContent=Math.max(0,diff)+' dagar';
 }
-function xSVG(s){return"<svg width=""+s+"" height=""+s+"" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>";}
-function emptyH(t,d){return"<div class="empty"><div class="empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="empty-title">"+t+"</div><div class="empty-desc">"+d+"</div></div>";}
+function xSVG(s){
+  return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+}
+function emptyH(t,d){
+  return '<div class="empty"><div class="empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="empty-title">'+t+'</div><div class="empty-desc">'+d+'</div></div>';
+}
 
-updateCountdown();setInterval(updateCountdown,60000);
+/* ---- EVENT DELEGATION (no inline onclick in generated HTML) ---- */
+document.getElementById('cities-list').addEventListener('click',function(e){
+  var card=e.target.closest('.city-card');
+  if(card)openCityDetail(card.getAttribute('data-id'));
+});
+document.getElementById('stops-list').addEventListener('click',function(e){
+  var btn=e.target.closest('.stop-chip-del');
+  if(btn)removeStop(btn.getAttribute('data-id'));
+});
+document.getElementById('modal-city-detail').addEventListener('click',function(e){
+  var del=e.target.closest('.act-del');
+  if(del){deleteActFromDetail(del.getAttribute('data-id'));return;}
+  if(e.target.id==='btn-add-act'){addActFromDetail();return;}
+});
+document.getElementById('checklist').addEventListener('click',function(e){
+  var del=e.target.closest('.check-del');
+  if(del){e.stopPropagation();deleteCheck(del.getAttribute('data-id'));return;}
+  var item=e.target.closest('.check-item');
+  if(item)toggleCheck(item.getAttribute('data-id'));
+});
+
+/* ---- BOOT ---- */
+setSync('syncing');
+refreshTab();
+updateCountdown();
+setInterval(updateCountdown,60000);
 </script>
 </body>
 </html>
