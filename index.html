@@ -1,664 +1,308 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="theme-color" content="#0C0C0C" />
-  <title>Tågluff 2026</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="theme-color" content="#080918"/>
+  <title>Tagluff 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
-    *, *::before, *::after {
-      box-sizing: border-box; margin: 0; padding: 0;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+    :root{
+      --bg:#080918;--s1:rgba(255,255,255,0.04);--s2:rgba(255,255,255,0.07);
+      --b1:rgba(255,255,255,0.08);--b2:rgba(255,255,255,0.14);
+      --t1:#F0F0FF;--t2:#7A7B9A;--t3:#3E3F5E;
+      --gold:#D4A853;--gold-hi:#F0CC78;--gold-lo:#9A6E28;
+      --gold-dim:rgba(212,168,83,0.10);--gold-glow:rgba(212,168,83,0.18);
+      --indigo:#6366F1;--green:#4ADE80;--red:#F87171;
+      --r:14px;--r-sm:9px;
+      --font:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+      --safe-t:env(safe-area-inset-top,44px);--safe-b:env(safe-area-inset-bottom,0px);
+      --nav-h:calc(62px + var(--safe-b));
     }
-    :root {
-      --bg:         #0C0C0C;
-      --surface:    #141414;
-      --surface-2:  #1C1C1C;
-      --border:     #262626;
-      --border-2:   #303030;
-      --text:       #EFEFEF;
-      --text-2:     #808080;
-      --text-3:     #484848;
-      --accent:     #C8963C;
-      --accent-dim: #1A1208;
-      --green:      #4ADE80;
-      --green-dim:  #0A1F10;
-      --red:        #F87171;
-      --font:       'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      --r:          10px;
-      --r-sm:       7px;
-      --safe-t:     env(safe-area-inset-top, 44px);
-      --safe-b:     env(safe-area-inset-bottom, 0px);
-      --nav-h:      calc(58px + var(--safe-b));
-    }
-    html, body {
-      height: 100%; width: 100%;
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--text);
-      overflow: hidden;
-      -webkit-font-smoothing: antialiased;
-    }
-    #app {
-      display: flex; flex-direction: column;
-      height: 100%; max-width: 430px;
-      margin: 0 auto;
-    }
+    html,body{height:100%;width:100%;font-family:var(--font);background:var(--bg);color:var(--t1);overflow:hidden;-webkit-font-smoothing:antialiased}
 
-    /* ── SCREENS ── */
-    .screen {
-      display: none; flex: 1;
-      overflow-y: auto; overflow-x: hidden;
-      -webkit-overflow-scrolling: touch;
-      overscroll-behavior: contain;
-      padding-bottom: calc(var(--nav-h) + 20px);
-    }
-    .screen.active { display: block; }
+    body::before{content:'';position:fixed;width:480px;height:480px;border-radius:50%;
+      background:radial-gradient(circle,rgba(212,168,83,0.14) 0%,transparent 65%);
+      top:-140px;right:-120px;pointer-events:none;z-index:0;
+      animation:orbA 14s ease-in-out infinite}
+    body::after{content:'';position:fixed;width:360px;height:360px;border-radius:50%;
+      background:radial-gradient(circle,rgba(99,102,241,0.12) 0%,transparent 65%);
+      bottom:80px;left:-80px;pointer-events:none;z-index:0;
+      animation:orbB 18s ease-in-out infinite}
+    @keyframes orbA{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(30px) scale(1.08)}}
+    @keyframes orbB{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-24px) scale(1.06)}}
 
-    /* ── TOP BAR ── */
-    .topbar {
-      padding: calc(var(--safe-t) + 14px) 20px 14px;
-      background: var(--bg);
-      position: sticky; top: 0; z-index: 20;
-      border-bottom: 1px solid var(--border);
-    }
-    .topbar h1 {
-      font-size: 17px; font-weight: 600;
-      letter-spacing: -0.2px; color: var(--text);
-    }
-    .topbar-row {
-      display: flex; align-items: center;
-      justify-content: space-between;
-    }
+    #app{display:flex;flex-direction:column;height:100%;max-width:430px;margin:0 auto;position:relative;z-index:1}
+    .screen{display:none;flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(var(--nav-h) + 24px)}
+    .screen.active{display:block;animation:fadeUp .3s ease both}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
-    /* ── SYNC INDICATOR ── */
-    .sync-pill {
-      display: flex; align-items: center;
-      gap: 5px; font-size: 11px; font-weight: 500;
-      color: var(--text-2);
-    }
-    .sync-dot {
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: var(--text-3);
-      transition: background 0.3s;
-    }
-    .sync-pill.online  .sync-dot { background: var(--green); }
-    .sync-pill.offline .sync-dot { background: var(--red); }
-    .sync-pill.syncing .sync-dot { background: var(--accent); animation: pulse 1s ease-in-out infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.2} }
+    .topbar{padding:calc(var(--safe-t) + 14px) 20px 14px;background:rgba(8,9,24,0.75);
+      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      position:sticky;top:0;z-index:20;border-bottom:1px solid var(--b1)}
+    .topbar-row{display:flex;align-items:center;justify-content:space-between}
+    .topbar h1{font-size:16px;font-weight:600;color:var(--t1);letter-spacing:-0.1px}
 
-    /* ── BOTTOM NAV ── */
-    .bottom-nav {
-      position: fixed; bottom: 0; left: 50%;
-      transform: translateX(-50%);
-      width: 100%; max-width: 430px;
-      background: rgba(12,12,12,0.94);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid var(--border);
-      display: flex;
-      padding: 6px 0 calc(6px + var(--safe-b));
-      z-index: 100;
-    }
-    .nav-btn {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; gap: 4px;
-      padding: 7px 0;
-      background: none; border: none; cursor: pointer;
-      transition: opacity 0.12s;
-    }
-    .nav-btn:active { opacity: 0.5; }
-    .nav-btn svg { stroke: var(--text-3); transition: stroke 0.15s; }
-    .nav-btn.active svg { stroke: var(--text); }
-    .nav-label {
-      font-size: 9.5px; font-weight: 500;
-      color: var(--text-3); font-family: var(--font);
-      transition: color 0.15s; letter-spacing: 0.2px;
-    }
-    .nav-btn.active .nav-label { color: var(--text); }
+    .sync-pill{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:var(--t3);padding:4px 9px;border-radius:20px;border:1px solid var(--b1);background:var(--s1)}
+    .sync-dot{width:5px;height:5px;border-radius:50%;background:var(--t3);transition:background .3s}
+    .sync-pill.online .sync-dot{background:var(--green);box-shadow:0 0 6px rgba(74,222,128,.5)}
+    .sync-pill.offline .sync-dot{background:var(--red)}
+    .sync-pill.syncing .sync-dot{background:var(--gold);animation:pulse 1s ease-in-out infinite}
+    .sync-pill.online{color:#6EE7A0}.sync-pill.offline{color:var(--red)}.sync-pill.syncing{color:var(--gold)}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
 
-    /* ── FAB ── */
-    .fab {
-      position: fixed;
-      bottom: calc(var(--nav-h) + 14px);
-      right: max(16px, calc((100vw - 430px) / 2 + 16px));
-      width: 46px; height: 46px;
-      border-radius: 50%;
-      background: var(--text);
-      color: var(--bg);
-      border: none; cursor: pointer;
-      display: none; align-items: center; justify-content: center;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-      z-index: 90; transition: transform 0.1s, opacity 0.1s;
-    }
-    .fab:active { transform: scale(0.91); opacity: 0.8; }
-    .fab svg { stroke: var(--bg); }
+    .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;
+      background:rgba(6,7,18,0.90);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
+      border-top:1px solid var(--b1);display:flex;padding:8px 0 calc(8px + var(--safe-b));z-index:100}
+    .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;background:none;border:none;cursor:pointer;transition:opacity .12s}
+    .nav-btn:active{opacity:.5}
+    .nav-icon{width:44px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:10px;transition:background .2s}
+    .nav-btn.active .nav-icon{background:var(--gold-dim)}
+    .nav-btn svg{stroke:var(--t3);transition:stroke .2s}
+    .nav-btn.active svg{stroke:var(--gold)}
+    .nav-lbl{font-size:10px;font-weight:500;color:var(--t3);font-family:var(--font);transition:color .2s;letter-spacing:.2px}
+    .nav-btn.active .nav-lbl{color:var(--gold)}
 
-    /* ── SECTION LABEL ── */
-    .sec { margin: 28px 20px 10px; }
-    .sec-lbl {
-      font-size: 10px; font-weight: 600;
-      color: var(--text-3); text-transform: uppercase;
-      letter-spacing: 1.2px;
-    }
+    .fab{position:fixed;bottom:calc(var(--nav-h) + 16px);right:max(16px,calc((100vw - 430px)/2 + 16px));
+      width:50px;height:50px;border-radius:50%;
+      background:linear-gradient(135deg,var(--gold-hi),var(--gold));
+      border:none;cursor:pointer;display:none;align-items:center;justify-content:center;
+      box-shadow:0 4px 24px rgba(212,168,83,.35);z-index:90;transition:transform .12s}
+    .fab:active{transform:scale(.9)}
+    .fab svg{stroke:#080918}
 
-    /* ── HOME: HERO ── */
-    .hero {
-      margin: 16px 20px 0;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      padding: 28px 24px 24px;
-    }
-    .hero-eyebrow {
-      font-size: 10px; font-weight: 600;
-      color: var(--text-3); text-transform: uppercase;
-      letter-spacing: 1.4px; margin-bottom: 10px;
-    }
-    .hero-number {
-      font-size: 72px; font-weight: 700;
-      line-height: 1; letter-spacing: -4px;
-      color: var(--text);
-    }
-    .hero-unit {
-      font-size: 14px; font-weight: 400;
-      color: var(--text-2); margin-top: 6px;
-    }
-    .hero-divider {
-      height: 1px; background: var(--border);
-      margin: 20px 0;
-    }
-    .hero-dates {
-      font-size: 14px; font-weight: 500;
-      color: var(--text-2);
-      display: flex; align-items: center; gap: 10px;
-    }
-    .hero-dates strong { color: var(--text); font-weight: 600; }
-    .hero-dates-sep {
-      width: 16px; height: 1px;
-      background: var(--border-2);
-    }
+    .sec{margin:28px 20px 12px;display:flex;align-items:center;gap:12px}
+    .sec-lbl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.4px;white-space:nowrap}
+    .sec-line{flex:1;height:1px;background:var(--b1)}
 
-    /* ── HOME: CREW ── */
-    .crew-row {
-      display: flex; gap: 10px;
-      overflow-x: auto; padding: 0 20px 2px;
-      -ms-overflow-style: none; scrollbar-width: none;
-    }
-    .crew-row::-webkit-scrollbar { display: none; }
-    .crew-item {
-      display: flex; flex-direction: column;
-      align-items: center; gap: 7px;
-      min-width: 54px;
-    }
-    .crew-avatar {
-      width: 48px; height: 48px;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 17px; font-weight: 700; color: white;
-    }
-    .crew-name {
-      font-size: 11px; font-weight: 500;
-      color: var(--text-2); text-align: center;
-    }
-    .crew-badge {
-      font-size: 9px; font-weight: 600;
-      background: var(--accent-dim); color: var(--accent);
-      border-radius: 4px; padding: 2px 6px;
-      letter-spacing: 0.3px; text-transform: uppercase;
-    }
+    /* HERO */
+    .hero{margin:16px 20px 0;
+      background:linear-gradient(135deg,rgba(212,168,83,.07) 0%,rgba(99,102,241,.04) 100%);
+      backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+      border:1px solid rgba(212,168,83,.18);border-radius:20px;padding:28px 26px 24px;position:relative;overflow:hidden}
+    .hero::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(212,168,83,.04) 0%,transparent 60%);pointer-events:none}
+    .hero::after{content:'';position:absolute;bottom:0;left:15%;right:15%;height:1px;background:linear-gradient(90deg,transparent,rgba(212,168,83,.35),transparent)}
+    .hero-eyebrow{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.6px;margin-bottom:14px}
+    .hero-num{font-size:96px;font-weight:800;line-height:.9;letter-spacing:-6px;
+      background:linear-gradient(135deg,var(--gold-hi) 0%,var(--gold) 45%,var(--gold-lo) 100%);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .hero-unit{font-size:15px;font-weight:500;color:var(--t2);margin-top:10px;letter-spacing:.2px}
+    .hero-rule{height:1px;background:var(--b1);margin:22px 0}
+    .hero-route{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .hero-city{font-size:14px;font-weight:600;color:var(--t1)}
+    .hero-arrow{flex:1;display:flex;align-items:center;gap:4px}
+    .hero-dash{flex:1;height:1px;background:linear-gradient(90deg,var(--b2),transparent)}
+    .hero-dates-row{font-size:12px;color:var(--t2);font-weight:400}
+    .hero-dates-row strong{color:var(--t1);font-weight:600}
 
-    /* ── HOME: STATS ── */
-    .stats-grid {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 8px; padding: 0 20px;
-    }
-    .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--r); padding: 16px;
-    }
-    .stat-val {
-      font-size: 28px; font-weight: 700;
-      letter-spacing: -1.5px; color: var(--text);
-    }
-    .stat-lbl {
-      font-size: 12px; color: var(--text-2);
-      margin-top: 2px; font-weight: 400;
-    }
+    /* CREW */
+    .crew-scroll{display:flex;gap:16px;overflow-x:auto;padding:0 20px 2px;-ms-overflow-style:none;scrollbar-width:none}
+    .crew-scroll::-webkit-scrollbar{display:none}
+    .crew-item{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:56px}
+    .crew-av{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;position:relative}
+    .crew-av::after{content:'';position:absolute;inset:-2px;border-radius:50%;background:inherit;opacity:.25;filter:blur(7px);z-index:-1}
+    .crew-name{font-size:11px;font-weight:500;color:var(--t2);text-align:center}
+    .crew-tag{font-size:9px;font-weight:700;background:var(--gold-dim);color:var(--gold);border-radius:4px;padding:2px 6px;text-transform:uppercase;letter-spacing:.4px}
 
-    /* ── MAP ── */
-    #map { height: 300px; width: 100%; }
-    .leaflet-container { font-family: var(--font) !important; background: #111 !important; }
+    /* STATS */
+    .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px}
+    .stat-card{background:var(--s1);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--b1);border-radius:var(--r);padding:18px 16px}
+    .stat-val{font-size:32px;font-weight:800;letter-spacing:-1.5px;color:var(--t1)}
+    .stat-lbl{font-size:12px;color:var(--t2);margin-top:3px}
 
-    /* ── STOP CHIP ── */
-    .stop-chip {
-      display: flex; align-items: center; gap: 12px;
-      background: var(--surface);
-      border-radius: var(--r-sm);
-      padding: 13px 16px;
-      margin: 0 20px 8px;
-      border: 1px solid var(--border);
-    }
-    .stop-chip-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .stop-chip-info { flex: 1; min-width: 0; }
-    .stop-chip-name { font-size: 14px; font-weight: 600; color: var(--text); }
-    .stop-chip-date { font-size: 12px; color: var(--text-2); margin-top: 1px; }
-    .stop-chip-del {
-      background: none; border: none;
-      color: var(--text-3); cursor: pointer; padding: 4px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .stop-chip-del:active { color: var(--red); }
+    /* MAP */
+    #map{height:300px;width:100%}
+    .leaflet-container{font-family:var(--font)!important;background:#06070F!important}
+    .leaflet-popup-content-wrapper{background:rgba(10,11,28,.96)!important;border:1px solid var(--b2)!important;border-radius:10px!important;box-shadow:0 8px 32px rgba(0,0,0,.5)!important;color:var(--t1)!important}
+    .leaflet-popup-tip{background:rgba(10,11,28,.96)!important}
 
-    /* ── CHECKLIST ── */
-    .progress-wrap {
-      height: 1px; background: var(--border);
-      margin: 0 20px 2px; position: relative;
-    }
-    .progress-fill {
-      height: 100%; background: var(--accent);
-      border-radius: 1px; transition: width 0.4s ease;
-      position: absolute; top: 0; left: 0;
-    }
+    .stop-chip{display:flex;align-items:center;gap:13px;background:var(--s1);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--b1);border-radius:var(--r-sm);padding:13px 16px;margin:0 20px 8px}
+    .stop-chip-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .stop-chip-info{flex:1;min-width:0}
+    .stop-chip-name{font-size:14px;font-weight:600;color:var(--t1)}
+    .stop-chip-date{font-size:11px;color:var(--t2);margin-top:2px}
+    .stop-chip-del{background:none;border:none;color:var(--t3);cursor:pointer;padding:4px;display:flex;align-items:center;flex-shrink:0}
+    .stop-chip-del:active{color:var(--red)}
 
-    .check-item {
-      display: flex; align-items: center; gap: 14px;
-      background: var(--surface);
-      border-radius: var(--r-sm);
-      padding: 13px 14px;
-      margin: 0 20px 6px;
-      border: 1px solid var(--border);
-      cursor: pointer; transition: opacity 0.2s;
-      -webkit-user-select: none; user-select: none;
-    }
-    .check-item.done { opacity: 0.4; }
-    .check-box {
-      width: 20px; height: 20px;
-      border-radius: 50%;
-      border: 1.5px solid var(--border-2);
-      flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s;
-    }
-    .check-item.done .check-box {
-      background: var(--green); border-color: var(--green);
-    }
-    .check-box-inner {
-      width: 0; height: 0; overflow: hidden;
-      transition: all 0.15s;
-    }
-    .check-item.done .check-box-inner {
-      width: auto; height: auto;
-    }
-    .check-text {
-      flex: 1; font-size: 14px; color: var(--text);
-      min-width: 0; line-height: 1.4;
-    }
-    .check-item.done .check-text { text-decoration: line-through; color: var(--text-2); }
-    .check-del {
-      background: none; border: none;
-      color: var(--text-3); cursor: pointer; padding: 4px;
-      display: flex; align-items: center; flex-shrink: 0;
-    }
-    .check-del:active { color: var(--red); }
+    /* CHECKLIST */
+    .progress-track{height:2px;background:var(--b1);margin:4px 20px 0;border-radius:2px;position:relative;overflow:hidden}
+    .progress-fill{position:absolute;top:0;left:0;height:100%;border-radius:2px;background:linear-gradient(90deg,var(--gold-lo),var(--gold-hi));transition:width .5s cubic-bezier(.4,0,.2,1);box-shadow:0 0 8px rgba(212,168,83,.4)}
 
-    /* ── STOP CARDS ── */
-    .stop-card {
-      background: var(--surface);
-      border-radius: var(--r);
-      margin: 0 20px 12px;
-      border: 1px solid var(--border); overflow: hidden;
-    }
-    .stop-card-head {
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: flex-start;
-      justify-content: space-between; gap: 8px;
-    }
-    .stop-card-city { font-size: 15px; font-weight: 600; }
-    .stop-card-date { font-size: 12px; color: var(--text-2); margin-top: 2px; }
-    .stop-home-tag {
-      font-size: 10px; font-weight: 600;
-      color: var(--text-3); text-transform: uppercase;
-      letter-spacing: 0.8px; margin-top: 4px;
-    }
-    .stop-card-body { padding: 4px 0; }
-    .act-row {
-      display: flex; align-items: center; gap: 12px;
-      padding: 11px 16px;
-      border-bottom: 1px solid var(--border);
-    }
-    .act-row:last-of-type { border-bottom: none; }
-    .act-tag {
-      font-size: 10px; font-weight: 600;
-      color: var(--text-3); text-transform: uppercase;
-      letter-spacing: 0.5px; min-width: 56px; flex-shrink: 0;
-    }
-    .act-text { flex: 1; font-size: 13px; color: var(--text); min-width: 0; }
-    .act-del {
-      background: none; border: none;
-      color: var(--text-3); cursor: pointer; padding: 4px;
-      display: flex; align-items: center; flex-shrink: 0;
-    }
-    .act-del:active { color: var(--red); }
-    .act-add {
-      display: flex; align-items: center; gap: 6px;
-      background: none; border: none;
-      font-size: 13px; font-weight: 500;
-      color: var(--text-3); cursor: pointer;
-      padding: 12px 16px; font-family: var(--font);
-      transition: color 0.15s;
-    }
-    .act-add:active { color: var(--text); }
+    .check-item{display:flex;align-items:center;gap:14px;background:var(--s1);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--b1);border-radius:var(--r-sm);padding:14px;margin:0 20px 7px;cursor:pointer;-webkit-user-select:none;user-select:none;transition:opacity .25s}
+    .check-item.done{opacity:.38}
+    .check-circle{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--t3);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s}
+    .check-item.done .check-circle{background:var(--green);border-color:var(--green);box-shadow:0 0 10px rgba(74,222,128,.3)}
+    .check-txt{flex:1;font-size:14px;color:var(--t1);min-width:0;line-height:1.4}
+    .check-item.done .check-txt{text-decoration:line-through;color:var(--t2)}
+    .check-del{background:none;border:none;color:var(--t3);cursor:pointer;padding:4px;display:flex;flex-shrink:0}
+    .check-del:active{color:var(--red)}
 
-    /* ── EMPTY STATE ── */
-    .empty {
-      text-align: center; padding: 56px 24px;
-      color: var(--text-3);
-    }
-    .empty-title { font-size: 15px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; }
-    .empty-desc { font-size: 13px; line-height: 1.6; }
+    /* STOPS DETAIL */
+    .stop-card{background:var(--s1);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--b1);border-radius:var(--r);margin:0 20px 12px;overflow:hidden}
+    .stop-card-head{padding:16px 18px;border-bottom:1px solid var(--b1);display:flex;align-items:flex-start;justify-content:space-between}
+    .stop-card-city{font-size:16px;font-weight:700;color:var(--t1)}
+    .stop-card-date{font-size:12px;color:var(--t2);margin-top:3px}
+    .stop-start-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--gold);background:var(--gold-dim);padding:3px 8px;border-radius:4px;border:1px solid rgba(212,168,83,.2);white-space:nowrap}
+    .stop-card-body{padding:4px 0}
+    .act-row{display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid var(--b1)}
+    .act-row:last-of-type{border-bottom:none}
+    .act-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--t3);min-width:58px;flex-shrink:0}
+    .act-txt{flex:1;font-size:13px;color:var(--t1);min-width:0}
+    .act-del{background:none;border:none;color:var(--t3);cursor:pointer;padding:4px;display:flex;flex-shrink:0}
+    .act-del:active{color:var(--red)}
+    .act-add{display:flex;align-items:center;gap:7px;background:none;border:none;font-size:13px;font-weight:500;color:var(--t3);cursor:pointer;padding:13px 18px;font-family:var(--font);transition:color .15s}
+    .act-add:active{color:var(--t1)}
 
-    /* ── MODALS ── */
-    .overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.7);
-      z-index: 200; display: none;
-      align-items: flex-end; justify-content: center;
-    }
-    .overlay.open { display: flex; }
-    .sheet {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-bottom: none;
-      border-radius: 16px 16px 0 0;
-      width: 100%; max-width: 430px;
-      padding: 0 20px calc(20px + var(--safe-b));
-      max-height: 90vh;
-      overflow-y: auto; -webkit-overflow-scrolling: touch;
-    }
-    .sheet-handle {
-      width: 32px; height: 3px;
-      background: var(--border-2); border-radius: 2px;
-      margin: 12px auto 18px;
-    }
-    .sheet-title { font-size: 17px; font-weight: 600; margin-bottom: 20px; }
+    /* EMPTY */
+    .empty{text-align:center;padding:56px 24px;color:var(--t3)}
+    .empty-icon{width:48px;height:48px;border-radius:12px;background:var(--s1);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+    .empty-title{font-size:15px;font-weight:600;color:var(--t2);margin-bottom:5px}
+    .empty-desc{font-size:13px;line-height:1.6}
 
-    /* ── FORM ── */
-    .form-grp { margin-bottom: 14px; }
-    .form-lbl {
-      display: block; font-size: 11px; font-weight: 600;
-      color: var(--text-3); margin-bottom: 7px;
-      text-transform: uppercase; letter-spacing: 0.8px;
-    }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .finput {
-      width: 100%; padding: 13px 14px;
-      background: var(--bg);
-      border: 1px solid var(--border-2);
-      border-radius: var(--r-sm);
-      font-size: 16px; font-family: var(--font);
-      color: var(--text); outline: none;
-      -webkit-appearance: none; appearance: none;
-      transition: border-color 0.15s;
-    }
-    .finput:focus { border-color: var(--accent); }
-    .finput::placeholder { color: var(--text-3); }
-    select.finput { -webkit-appearance: none; appearance: none; }
-
-    .btn-primary {
-      width: 100%; padding: 15px;
-      background: var(--text); color: var(--bg);
-      border: none; border-radius: var(--r-sm);
-      font-size: 15px; font-weight: 600;
-      font-family: var(--font); cursor: pointer;
-      margin-top: 8px; transition: opacity 0.15s;
-    }
-    .btn-primary:active { opacity: 0.75; }
-    .btn-secondary {
-      width: 100%; padding: 14px;
-      background: none; border: none;
-      font-size: 15px; color: var(--text-2);
-      font-family: var(--font); cursor: pointer; margin-top: 4px;
-    }
-    .btn-secondary:active { opacity: 0.6; }
-
-    .geo-hint {
-      font-size: 11px; color: var(--accent);
-      margin-top: 6px; min-height: 14px;
-    }
+    /* MODAL */
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:none;align-items:flex-end;justify-content:center}
+    .overlay.open{display:flex}
+    .sheet{background:rgba(10,11,28,.97);border:1px solid var(--b2);border-bottom:none;border-radius:20px 20px 0 0;width:100%;max-width:430px;padding:0 22px calc(24px + var(--safe-b));max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+    .sheet-handle{width:32px;height:3px;background:var(--b2);border-radius:2px;margin:12px auto 20px}
+    .sheet-title{font-size:18px;font-weight:700;color:var(--t1);margin-bottom:22px}
+    .form-grp{margin-bottom:14px}
+    .form-lbl{display:block;font-size:10px;font-weight:700;color:var(--t3);margin-bottom:7px;text-transform:uppercase;letter-spacing:1px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .finput{width:100%;padding:13px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--b1);border-radius:var(--r-sm);font-size:16px;font-family:var(--font);color:var(--t1);outline:none;-webkit-appearance:none;appearance:none;transition:border-color .15s}
+    .finput:focus{border-color:var(--gold);background:rgba(212,168,83,.04)}
+    .finput::placeholder{color:var(--t3)}
+    select.finput{-webkit-appearance:none;appearance:none}
+    .geo-hint{font-size:11px;color:var(--gold);margin-top:6px;min-height:14px}
+    .btn-main{width:100%;padding:15px;background:linear-gradient(135deg,var(--gold-hi),var(--gold));color:#080918;border:none;border-radius:var(--r-sm);font-size:15px;font-weight:700;font-family:var(--font);cursor:pointer;margin-top:8px;box-shadow:0 4px 20px rgba(212,168,83,.25);transition:opacity .15s,transform .1s}
+    .btn-main:active{opacity:.8;transform:scale(.98)}
+    .btn-cancel{width:100%;padding:14px;background:none;border:none;font-size:15px;color:var(--t2);font-family:var(--font);cursor:pointer;margin-top:4px}
+    .btn-cancel:active{opacity:.6}
   </style>
 </head>
 <body>
 <div id="app">
-
-  <!-- HOME -->
   <div id="screen-home" class="screen active">
     <div class="topbar">
       <div class="topbar-row">
-        <h1>Tågluff 2026</h1>
-        <div class="sync-pill syncing" id="sync-pill">
-          <div class="sync-dot"></div>
-          <span id="sync-txt">Ansluter</span>
-        </div>
+        <h1>Tagluff 2026</h1>
+        <div class="sync-pill syncing" id="sync-pill"><div class="sync-dot"></div><span id="sync-txt">Ansluter</span></div>
       </div>
     </div>
-
     <div class="hero">
       <div class="hero-eyebrow">Avresa om</div>
-      <div class="hero-number" id="cd-num">–</div>
-      <div class="hero-unit">dagar</div>
-      <div class="hero-divider"></div>
-      <div class="hero-dates">
-        <strong>2 aug</strong>
-        <div class="hero-dates-sep"></div>
-        <strong>16 aug</strong>
-        <span style="margin-left:2px;">· 15 dagar</span>
+      <div class="hero-num" id="cd-num">-</div>
+      <div class="hero-unit">dagar kvar</div>
+      <div class="hero-rule"></div>
+      <div class="hero-route">
+        <span class="hero-city">Stockholm</span>
+        <div class="hero-arrow">
+          <div class="hero-dash"></div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(212,168,83,.5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </div>
+        <span class="hero-city">Europa</span>
       </div>
+      <div class="hero-dates-row"><strong>2 aug</strong> &mdash; <strong>16 aug</strong>&nbsp;&middot;&nbsp;15 dagar</div>
     </div>
-
-    <div class="sec"><div class="sec-lbl">Gänget</div></div>
-    <div class="crew-row">
-      <div class="crew-item">
-        <div class="crew-avatar" style="background:#5B5BD6;">A</div>
-        <span class="crew-name">Aston</span>
-      </div>
-      <div class="crew-item">
-        <div class="crew-avatar" style="background:#E79D13;">M</div>
-        <span class="crew-name">Molle</span>
-        <span class="crew-badge">Gaffer</span>
-      </div>
-      <div class="crew-item">
-        <div class="crew-avatar" style="background:#1A9E5E;">J</div>
-        <span class="crew-name">Jacob</span>
-      </div>
-      <div class="crew-item">
-        <div class="crew-avatar" style="background:#D14343;">C</div>
-        <span class="crew-name">Cesar</span>
-      </div>
-      <div class="crew-item">
-        <div class="crew-avatar" style="background:#2870D4;">I</div>
-        <span class="crew-name">Ivar</span>
-      </div>
+    <div class="sec"><div class="sec-lbl">Gänget</div><div class="sec-line"></div></div>
+    <div class="crew-scroll">
+      <div class="crew-item"><div class="crew-av" style="background:linear-gradient(135deg,#6366F1,#8B5CF6)">A</div><span class="crew-name">Aston</span></div>
+      <div class="crew-item"><div class="crew-av" style="background:linear-gradient(135deg,#F59E0B,#EF4444)">M</div><span class="crew-name">Molle</span><span class="crew-tag">Gaffer</span></div>
+      <div class="crew-item"><div class="crew-av" style="background:linear-gradient(135deg,#10B981,#0EA5E9)">J</div><span class="crew-name">Jacob</span></div>
+      <div class="crew-item"><div class="crew-av" style="background:linear-gradient(135deg,#EF4444,#EC4899)">C</div><span class="crew-name">Cesar</span></div>
+      <div class="crew-item"><div class="crew-av" style="background:linear-gradient(135deg,#3B82F6,#06B6D4)">I</div><span class="crew-name">Ivar</span></div>
     </div>
-
-    <div class="sec"><div class="sec-lbl">Reseinfo</div></div>
+    <div class="sec"><div class="sec-lbl">Reseinfo</div><div class="sec-line"></div></div>
     <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-val">15</div>
-        <div class="stat-lbl">Dagar</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val">5</div>
-        <div class="stat-lbl">Resenärer</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val" id="home-stops">–</div>
-        <div class="stat-lbl">Stopp planerade</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val" id="home-checks">–</div>
-        <div class="stat-lbl">Uppgifter klara</div>
-      </div>
+      <div class="stat-card"><div class="stat-val">15</div><div class="stat-lbl">Dagar</div></div>
+      <div class="stat-card"><div class="stat-val">5</div><div class="stat-lbl">Resenärer</div></div>
+      <div class="stat-card"><div class="stat-val" id="home-stops">-</div><div class="stat-lbl">Stopp planerade</div></div>
+      <div class="stat-card"><div class="stat-val" id="home-checks">-</div><div class="stat-lbl">Uppgifter klara</div></div>
     </div>
   </div>
 
-  <!-- MAP -->
   <div id="screen-map" class="screen">
     <div class="topbar">
-      <div class="topbar-row">
-        <h1>Rutt</h1>
-        <span id="map-count" style="font-size:12px;color:var(--text-3);font-weight:500;"></span>
-      </div>
+      <div class="topbar-row"><h1>Rutt</h1><span id="map-count" style="font-size:12px;color:var(--t3);font-weight:500"></span></div>
     </div>
     <div id="map"></div>
-    <div class="sec"><div class="sec-lbl">Stopp</div></div>
+    <div class="sec"><div class="sec-lbl">Planerade stopp</div><div class="sec-line"></div></div>
     <div id="stops-list"></div>
   </div>
 
-  <!-- CHECKLIST -->
   <div id="screen-check" class="screen">
     <div class="topbar">
-      <div class="topbar-row">
-        <h1>Checklista</h1>
-        <span id="check-count" style="font-size:12px;color:var(--text-3);font-weight:500;"></span>
-      </div>
+      <div class="topbar-row"><h1>Checklista</h1><span id="check-count" style="font-size:12px;color:var(--t3);font-weight:500"></span></div>
     </div>
-    <div class="progress-wrap" style="margin-top:2px;">
-      <div class="progress-fill" id="check-bar" style="width:0%"></div>
-    </div>
+    <div class="progress-track"><div class="progress-fill" id="check-bar" style="width:0%"></div></div>
     <div id="checklist"></div>
   </div>
 
-  <!-- STOPS DETAIL -->
   <div id="screen-stops" class="screen">
-    <div class="topbar">
-      <h1>Stopp</h1>
-    </div>
+    <div class="topbar"><h1>Stopp</h1></div>
     <div id="stops-detail"></div>
   </div>
 
   <nav class="bottom-nav">
     <button class="nav-btn active" id="nav-home" onclick="goTo('home')">
-      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-      </svg>
-      <span class="nav-label">Hem</span>
+      <div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+      <span class="nav-lbl">Hem</span>
     </button>
     <button class="nav-btn" id="nav-map" onclick="goTo('map')">
-      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-        <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
-        <line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/>
-      </svg>
-      <span class="nav-label">Karta</span>
+      <div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></div>
+      <span class="nav-lbl">Karta</span>
     </button>
     <button class="nav-btn" id="nav-check" onclick="goTo('check')">
-      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="9 11 12 14 22 4"/>
-        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-      </svg>
-      <span class="nav-label">Lista</span>
+      <div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
+      <span class="nav-lbl">Lista</span>
     </button>
     <button class="nav-btn" id="nav-stops" onclick="goTo('stops')">
-      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
-        <circle cx="12" cy="10" r="3"/>
-      </svg>
-      <span class="nav-label">Stopp</span>
+      <div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+      <span class="nav-lbl">Stopp</span>
     </button>
   </nav>
 </div>
 
 <button class="fab" id="fab" onclick="fabAction()">
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-  </svg>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 </button>
 
-<!-- MODAL: Add Stop -->
 <div class="overlay" id="modal-stop">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">Lägg till stopp</div>
-    <div class="form-grp">
-      <label class="form-lbl">Stad</label>
-      <input class="finput" id="in-city" placeholder="t.ex. Berlin" autocomplete="off" inputmode="text" />
-      <div class="geo-hint" id="geo-hint"></div>
-    </div>
-    <div class="form-grp">
-      <label class="form-lbl">Datum</label>
-      <div class="form-row">
-        <input class="finput" id="in-from" type="date" min="2026-08-02" max="2026-08-16" />
-        <input class="finput" id="in-to"   type="date" min="2026-08-02" max="2026-08-16" />
-      </div>
-    </div>
-    <button class="btn-primary" id="stop-add-btn" onclick="geocodeAndAdd()">Lägg till</button>
-    <button class="btn-secondary" onclick="closeModal('modal-stop')">Avbryt</button>
+    <div class="form-grp"><label class="form-lbl">Stad</label><input class="finput" id="in-city" placeholder="t.ex. Berlin" autocomplete="off" inputmode="text"/><div class="geo-hint" id="geo-hint"></div></div>
+    <div class="form-grp"><label class="form-lbl">Datum</label><div class="form-row"><input class="finput" id="in-from" type="date" min="2026-08-02" max="2026-08-16"/><input class="finput" id="in-to" type="date" min="2026-08-02" max="2026-08-16"/></div></div>
+    <button class="btn-main" id="stop-add-btn" onclick="geocodeAndAdd()">Lägg till stopp</button>
+    <button class="btn-cancel" onclick="closeModal('modal-stop')">Avbryt</button>
   </div>
 </div>
 
-<!-- MODAL: Add Check -->
 <div class="overlay" id="modal-check">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">Ny uppgift</div>
-    <div class="form-grp">
-      <label class="form-lbl">Uppgift</label>
-      <input class="finput" id="in-check" placeholder="t.ex. Köp Eurail-kort" autocomplete="off" />
-    </div>
-    <div class="form-grp">
-      <label class="form-lbl">Kategori</label>
-      <select class="finput" id="in-cat">
-        <option>Före resan</option>
-        <option>Packlista</option>
-        <option>Under resan</option>
-      </select>
-    </div>
-    <button class="btn-primary" onclick="addCheck()">Lägg till</button>
-    <button class="btn-secondary" onclick="closeModal('modal-check')">Avbryt</button>
+    <div class="form-grp"><label class="form-lbl">Uppgift</label><input class="finput" id="in-check" placeholder="t.ex. Köp Eurail-kort" autocomplete="off"/></div>
+    <div class="form-grp"><label class="form-lbl">Kategori</label><select class="finput" id="in-cat"><option>Före resan</option><option>Packlista</option><option>Under resan</option></select></div>
+    <button class="btn-main" onclick="addCheck()">Lägg till</button>
+    <button class="btn-cancel" onclick="closeModal('modal-check')">Avbryt</button>
   </div>
 </div>
 
-<!-- MODAL: Add Activity -->
 <div class="overlay" id="modal-activity">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">Lägg till</div>
-    <div class="form-grp">
-      <label class="form-lbl">Stopp</label>
-      <select class="finput" id="in-act-stop"></select>
-    </div>
-    <div class="form-grp">
-      <label class="form-lbl">Beskrivning</label>
-      <input class="finput" id="in-act-text" placeholder="t.ex. Hostel Mitte, check-in 15:00" autocomplete="off" />
-    </div>
-    <div class="form-grp">
-      <label class="form-lbl">Kategori</label>
-      <select class="finput" id="in-act-type">
-        <option value="boende">Boende</option>
-        <option value="mat">Mat & dryck</option>
-        <option value="aktivitet">Aktivitet</option>
-        <option value="transport">Transport</option>
-        <option value="sevärdhet">Sevärdhet</option>
-        <option value="noje">Nöje</option>
-        <option value="tips">Tips</option>
-      </select>
-    </div>
-    <button class="btn-primary" onclick="addActivity()">Lägg till</button>
-    <button class="btn-secondary" onclick="closeModal('modal-activity')">Avbryt</button>
+    <div class="form-grp"><label class="form-lbl">Stopp</label><select class="finput" id="in-act-stop"></select></div>
+    <div class="form-grp"><label class="form-lbl">Beskrivning</label><input class="finput" id="in-act-text" placeholder="t.ex. Hostel Mitte, check-in 15:00" autocomplete="off"/></div>
+    <div class="form-grp"><label class="form-lbl">Kategori</label><select class="finput" id="in-act-type"><option value="boende">Boende</option><option value="mat">Mat och dryck</option><option value="aktivitet">Aktivitet</option><option value="transport">Transport</option><option value="sevärdhet">Sevärdhet</option><option value="nöje">Nöje</option><option value="tips">Tips</option></select></div>
+    <button class="btn-main" onclick="addActivity()">Lägg till</button>
+    <button class="btn-cancel" onclick="closeModal('modal-activity')">Avbryt</button>
   </div>
 </div>
 
@@ -666,374 +310,215 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
-// ── FIREBASE ──────────────────────────────────────────────
 firebase.initializeApp({
-  apiKey:            "AIzaSyCS7frMIpfvfO29EWmUXuhD2tMmhLenKCA",
-  authDomain:        "tagluff-2026.firebaseapp.com",
-  projectId:         "tagluff-2026",
-  storageBucket:     "tagluff-2026.firebasestorage.app",
-  messagingSenderId: "559457911138",
-  appId:             "1:559457911138:web:2bbfd432ff2cfaf8572c3b"
+  apiKey:"AIzaSyCS7frMIpfvfO29EWmUXuhD2tMmhLenKCA",
+  authDomain:"tagluff-2026.firebaseapp.com",
+  projectId:"tagluff-2026",
+  storageBucket:"tagluff-2026.firebasestorage.app",
+  messagingSenderId:"559457911138",
+  appId:"1:559457911138:web:2bbfd432ff2cfaf8572c3b"
 });
-const db = firebase.firestore();
-const tripRef = db.collection('trips').doc('tagluff2026');
-
-// ── DEFAULTS ──────────────────────────────────────────────
-const DEFAULTS = {
-  stops: [
-    { id:'sto', city:'Stockholm', from:'2026-08-02', to:'2026-08-02',
-      lat:59.3293, lng:18.0686, activities:[], isHome:true }
-  ],
-  checklist: [
-    { id:'c1', text:'Köp Eurail-kort',              cat:'Före resan', done:false },
-    { id:'c2', text:'Ladda ner offline-kartor',     cat:'Före resan', done:false },
-    { id:'c3', text:'Bokningsnummer på ett ställe', cat:'Före resan', done:false },
-    { id:'c4', text:'Kolla EU-sjukkort (EHIC)',     cat:'Före resan', done:false },
-    { id:'c5', text:'Pass',                         cat:'Packlista',  done:false },
-    { id:'c6', text:'Laddare + universaladapter',   cat:'Packlista',  done:false },
-    { id:'c7', text:'Powerbank',                    cat:'Packlista',  done:false },
-    { id:'c8', text:'Regnjacka',                    cat:'Packlista',  done:false },
-    { id:'c9', text:'Kontanter (euro)',              cat:'Packlista',  done:false },
+const db=firebase.firestore(),tripRef=db.collection('trips').doc('tagluff2026');
+const DEFAULTS={
+  stops:[{id:'sto',city:'Stockholm',from:'2026-08-02',to:'2026-08-02',lat:59.3293,lng:18.0686,activities:[],isHome:true}],
+  checklist:[
+    {id:'c1',text:'Köp Eurail-kort',cat:'Före resan',done:false},
+    {id:'c2',text:'Ladda ner offline-kartor',cat:'Före resan',done:false},
+    {id:'c3',text:'Bokningsnummer på ett ställe',cat:'Före resan',done:false},
+    {id:'c4',text:'Kolla EU-sjukkort (EHIC)',cat:'Före resan',done:false},
+    {id:'c5',text:'Pass',cat:'Packlista',done:false},
+    {id:'c6',text:'Laddare + universaladapter',cat:'Packlista',done:false},
+    {id:'c7',text:'Powerbank',cat:'Packlista',done:false},
+    {id:'c8',text:'Regnjacka',cat:'Packlista',done:false},
+    {id:'c9',text:'Kontanter (euro)',cat:'Packlista',done:false},
   ]
 };
+let state=null,mapInst=null,mapLayers=[],currentTab='home',saveTimer=null;
 
-// ── STATE ─────────────────────────────────────────────────
-let state = null;
-let mapInst = null;
-let mapLayers = [];
-let currentTab = 'home';
-let saveTimer = null;
-
-// ── SYNC STATUS ───────────────────────────────────────────
-function setSync(s) {
-  const pill = document.getElementById('sync-pill');
-  const txt  = document.getElementById('sync-txt');
-  if (!pill) return;
-  pill.className = 'sync-pill ' + s;
-  txt.textContent = s === 'online' ? 'Synkad' : s === 'offline' ? 'Offline' : 'Synkar';
+function setSync(s){
+  const p=document.getElementById('sync-pill'),t=document.getElementById('sync-txt');
+  if(!p)return;p.className='sync-pill '+s;
+  t.textContent=s==='online'?'Synkad':s==='offline'?'Offline':'Synkar';
 }
-
-// ── FIRESTORE LISTENER ────────────────────────────────────
-tripRef.onSnapshot(snap => {
-  if (!snap.exists) {
-    tripRef.set(DEFAULTS);
-    state = JSON.parse(JSON.stringify(DEFAULTS));
-  } else {
-    state = snap.data();
-  }
-  setSync('online');
-  refreshTab();
-  updateStats();
-}, () => {
+tripRef.onSnapshot(snap=>{
+  state=snap.exists?snap.data():JSON.parse(JSON.stringify(DEFAULTS));
+  if(!snap.exists)tripRef.set(DEFAULTS);
+  setSync('online');refreshTab();updateStats();
+},()=>{
   setSync('offline');
-  if (!state) {
-    try { state = JSON.parse(localStorage.getItem('tg26') || 'null') || JSON.parse(JSON.stringify(DEFAULTS)); }
-    catch(e) { state = JSON.parse(JSON.stringify(DEFAULTS)); }
-    refreshTab(); updateStats();
-  }
+  if(!state){try{state=JSON.parse(localStorage.getItem('tg26')||'null')||JSON.parse(JSON.stringify(DEFAULTS));}catch(e){state=JSON.parse(JSON.stringify(DEFAULTS));}
+  refreshTab();updateStats();}
 });
-
-function save() {
-  if (!state) return;
-  setSync('syncing');
-  try { localStorage.setItem('tg26', JSON.stringify(state)); } catch(e) {}
+function save(){
+  if(!state)return;setSync('syncing');
+  try{localStorage.setItem('tg26',JSON.stringify(state));}catch(e){}
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    tripRef.set(state)
-      .then(() => setSync('online'))
-      .catch(() => setSync('offline'));
-  }, 500);
+  saveTimer=setTimeout(()=>tripRef.set(state).then(()=>setSync('online')).catch(()=>setSync('offline')),500);
 }
-
-// ── NAVIGATION ────────────────────────────────────────────
-function goTo(tab) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('screen-' + tab).classList.add('active');
-  document.getElementById('nav-'    + tab).classList.add('active');
-  currentTab = tab;
-  document.getElementById('fab').style.display = tab === 'home' ? 'none' : 'flex';
-  if (tab === 'map')   { setTimeout(initMap, 80); if (state) renderMap(); }
-  if (tab === 'check') { if (state) renderChecklist(); }
-  if (tab === 'stops') { if (state) renderStops(); }
-  if (tab === 'home')  updateStats();
+function goTo(tab){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+tab).classList.add('active');
+  document.getElementById('nav-'+tab).classList.add('active');
+  currentTab=tab;
+  document.getElementById('fab').style.display=tab==='home'?'none':'flex';
+  if(tab==='map'){setTimeout(initMap,80);if(state)renderMap();}
+  if(tab==='check'&&state)renderChecklist();
+  if(tab==='stops'&&state)renderStops();
+  if(tab==='home')updateStats();
 }
-
-function fabAction() {
-  if (currentTab === 'map')   openModal('modal-stop');
-  if (currentTab === 'check') openModal('modal-check');
-  if (currentTab === 'stops') openActivityModal(null);
+function fabAction(){
+  if(currentTab==='map')openModal('modal-stop');
+  if(currentTab==='check')openModal('modal-check');
+  if(currentTab==='stops')openActivityModal(null);
 }
-
-function refreshTab() {
-  if (currentTab === 'home')  updateStats();
-  if (currentTab === 'map'  && mapInst) renderMap();
-  if (currentTab === 'check') renderChecklist();
-  if (currentTab === 'stops') renderStops();
+function refreshTab(){
+  if(currentTab==='home')updateStats();
+  if(currentTab==='map'&&mapInst)renderMap();
+  if(currentTab==='check')renderChecklist();
+  if(currentTab==='stops')renderStops();
 }
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
 
-function openModal(id)  { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-document.querySelectorAll('.overlay').forEach(o => {
-  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
-});
-
-// ── MAP ───────────────────────────────────────────────────
-function initMap() {
-  if (mapInst) { mapInst.invalidateSize(); return; }
-  mapInst = L.map('map', { zoomControl:false, attributionControl:false }).setView([52,15], 4);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom:19 }).addTo(mapInst);
+function initMap(){
+  if(mapInst){mapInst.invalidateSize();return;}
+  mapInst=L.map('map',{zoomControl:false,attributionControl:false}).setView([52,15],4);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(mapInst);
 }
-
-function renderMap() {
-  if (!mapInst || !state) return;
-  mapLayers.forEach(m => { try { mapInst.removeLayer(m); } catch(e){} });
-  mapLayers = [];
-
-  const mkPin = col => L.divIcon({
-    html: `<div style="width:10px;height:10px;border-radius:50%;background:${col};border:2px solid rgba(255,255,255,0.15);box-shadow:0 0 0 1px ${col}40;"></div>`,
-    className:'', iconSize:[10,10], iconAnchor:[5,5]
+function renderMap(){
+  if(!mapInst||!state)return;
+  mapLayers.forEach(m=>{try{mapInst.removeLayer(m);}catch(e){}});mapLayers=[];
+  const mkPin=col=>L.divIcon({
+    html:'<div style="width:11px;height:11px;border-radius:50%;background:'+col+';border:2px solid rgba(255,255,255,0.15);box-shadow:0 0 0 3px '+col+'30,0 2px 8px rgba(0,0,0,.4)"></div>',
+    className:'',iconSize:[11,11],iconAnchor:[5.5,5.5]
   });
-
-  const coords = [];
-  (state.stops || []).forEach(s => {
-    if (s.lat == null) return;
-    const col = s.isHome ? '#5B5BD6' : '#C8963C';
-    const m = L.marker([s.lat, s.lng], { icon: mkPin(col) }).addTo(mapInst)
-      .bindPopup(`<span style="font-family:sans-serif;font-size:13px;font-weight:600;">${s.city}</span><br><span style="font-family:sans-serif;font-size:11px;color:#888;">${fmtDate(s.from)} — ${fmtDate(s.to)}</span>`);
-    mapLayers.push(m); coords.push([s.lat, s.lng]);
+  const coords=[];
+  (state.stops||[]).forEach(s=>{
+    if(s.lat==null)return;
+    const col=s.isHome?'#6366F1':'#D4A853';
+    const m=L.marker([s.lat,s.lng],{icon:mkPin(col)}).addTo(mapInst)
+      .bindPopup('<strong style="font-family:sans-serif;font-size:13px;">'+s.city+'</strong><br><span style="font-family:sans-serif;font-size:11px;color:#7A7B9A;">'+fmtDate(s.from)+' - '+fmtDate(s.to)+'</span>');
+    mapLayers.push(m);coords.push([s.lat,s.lng]);
   });
-
-  if (coords.length > 1) {
-    const line = L.polyline(coords, { color:'#C8963C', weight:2, dashArray:'5 8', opacity:0.6 }).addTo(mapInst);
-    mapLayers.push(line);
-    mapInst.fitBounds(line.getBounds(), { padding:[28,28] });
+  if(coords.length>1){
+    const line=L.polyline(coords,{color:'#D4A853',weight:2,dashArray:'5 9',opacity:.55}).addTo(mapInst);
+    mapLayers.push(line);mapInst.fitBounds(line.getBounds(),{padding:[32,32]});
   }
-
-  const stops = state.stops || [];
-  const countEl = document.getElementById('map-count');
-  if (countEl) countEl.textContent = stops.length === 1 ? '1 stopp' : stops.length + ' stopp';
-
-  const el = document.getElementById('stops-list');
-  if (!stops.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-title">Inga stopp planerade</div><div class="empty-desc">Tryck + för att lägga till en stad</div></div>';
-    return;
-  }
-  el.innerHTML = stops.map(s => `
+  const stops=state.stops||[];
+  const cEl=document.getElementById('map-count');
+  if(cEl)cEl.textContent=stops.length+' stopp';
+  const el=document.getElementById('stops-list');
+  if(!stops.length){el.innerHTML=emptyH('Inga stopp planerade','Tryck + för att lägga till en stad');return;}
+  el.innerHTML=stops.map(s=>`
     <div class="stop-chip">
-      <div class="stop-chip-dot" style="background:${s.isHome ? '#5B5BD6' : '#C8963C'};"></div>
-      <div class="stop-chip-info">
-        <div class="stop-chip-name">${s.city}</div>
-        <div class="stop-chip-date">${fmtDate(s.from)} — ${fmtDate(s.to)}</div>
-      </div>
-      ${s.isHome ? '' : `<button class="stop-chip-del" onclick="removeStop('${s.id}')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </button>`}
-    </div>
-  `).join('');
+      <div class="stop-chip-dot" style="background:${s.isHome?'#6366F1':'#D4A853'};box-shadow:0 0 6px ${s.isHome?'rgba(99,102,241,.5)':'rgba(212,168,83,.5)'};"></div>
+      <div class="stop-chip-info"><div class="stop-chip-name">${s.city}</div><div class="stop-chip-date">${fmtDate(s.from)} - ${fmtDate(s.to)}</div></div>
+      ${s.isHome?'':'<button class="stop-chip-del" onclick="removeStop(\''+s.id+'\')">'+xSVG(13)+'</button>'}
+    </div>`).join('');
 }
-
-async function geocodeAndAdd() {
-  const city = document.getElementById('in-city').value.trim();
-  const from = document.getElementById('in-from').value;
-  const to   = document.getElementById('in-to').value;
-  if (!city) { document.getElementById('geo-hint').textContent = 'Ange en stad.'; return; }
-  const btn = document.getElementById('stop-add-btn');
-  btn.textContent = 'Söker…'; btn.disabled = true;
-  document.getElementById('geo-hint').textContent = 'Söker koordinater…';
-  let lat = null, lng = null;
-  try {
-    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`);
-    const d = await r.json();
-    if (d.length) { lat = parseFloat(d[0].lat); lng = parseFloat(d[0].lon); }
-    document.getElementById('geo-hint').textContent = lat ? 'Hittad.' : 'Hittades inte — läggs till utan kartpin.';
-  } catch(e) {
-    document.getElementById('geo-hint').textContent = 'Offline — läggs till utan kartpin.';
-  }
-  if (!state.stops) state.stops = [];
-  state.stops.push({ id: Date.now().toString(), city, from, to, lat, lng, activities:[] });
-  save();
-  btn.textContent = 'Lägg till'; btn.disabled = false;
-  setTimeout(() => {
+async function geocodeAndAdd(){
+  const city=document.getElementById('in-city').value.trim();
+  const from=document.getElementById('in-from').value,to=document.getElementById('in-to').value;
+  if(!city){document.getElementById('geo-hint').textContent='Ange en stad.';return;}
+  const btn=document.getElementById('stop-add-btn');btn.textContent='Söker…';btn.disabled=true;
+  document.getElementById('geo-hint').textContent='Söker koordinater…';
+  let lat=null,lng=null;
+  try{
+    const r=await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(city)+'&format=json&limit=1');
+    const d=await r.json();if(d.length){lat=parseFloat(d[0].lat);lng=parseFloat(d[0].lon);}
+    document.getElementById('geo-hint').textContent=lat?'Hittad.':'Hittades inte.';
+  }catch(e){document.getElementById('geo-hint').textContent='Offline.';}
+  if(!state.stops)state.stops=[];
+  state.stops.push({id:Date.now().toString(),city,from,to,lat,lng,activities:[]});
+  save();btn.textContent='Lägg till stopp';btn.disabled=false;
+  setTimeout(()=>{
     closeModal('modal-stop');
-    ['in-city','in-from','in-to'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('geo-hint').textContent = '';
-    if (mapInst) renderMap();
-    updateStats();
-  }, 500);
+    ['in-city','in-from','in-to'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('geo-hint').textContent='';
+    if(mapInst)renderMap();updateStats();
+  },500);
 }
+function removeStop(id){state.stops=(state.stops||[]).filter(s=>s.id!==id);save();if(mapInst)renderMap();renderStops();updateStats();}
 
-function removeStop(id) {
-  state.stops = (state.stops||[]).filter(s => s.id !== id);
-  save(); if (mapInst) renderMap(); renderStops(); updateStats();
-}
-
-// ── CHECKLIST ─────────────────────────────────────────────
-function renderChecklist() {
-  if (!state) return;
-  const cl    = state.checklist || [];
-  const done  = cl.filter(i => i.done).length;
-  const total = cl.length;
-  const pct   = total ? Math.round(done/total*100) : 0;
-
-  document.getElementById('check-count').textContent = done + ' / ' + total;
-  document.getElementById('check-bar').style.width = pct + '%';
-
-  const el   = document.getElementById('checklist');
-  const cats = [...new Set(cl.map(i => i.cat))];
-
-  if (!total) {
-    el.innerHTML = '<div class="empty"><div class="empty-title">Listan är tom</div><div class="empty-desc">Tryck + för att lägga till en uppgift</div></div>';
-    return;
-  }
-  el.innerHTML = cats.map(cat => {
-    const items = cl.filter(i => i.cat === cat);
-    return `<div class="sec"><div class="sec-lbl">${cat}</div></div>` + items.map(item => `
-      <div class="check-item${item.done?' done':''}" onclick="toggleCheck('${item.id}')">
-        <div class="check-box">
-          <div class="check-box-inner">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-          </div>
-        </div>
-        <span class="check-text">${item.text}</span>
-        <button class="check-del" onclick="event.stopPropagation();deleteCheck('${item.id}')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-    `).join('');
-  }).join('');
+function renderChecklist(){
+  if(!state)return;
+  const cl=state.checklist||[],done=cl.filter(i=>i.done).length,total=cl.length,pct=total?Math.round(done/total*100):0;
+  document.getElementById('check-count').textContent=done+' / '+total;
+  document.getElementById('check-bar').style.width=pct+'%';
+  const cats=[...new Set(cl.map(i=>i.cat))];
+  const el=document.getElementById('checklist');
+  if(!total){el.innerHTML=emptyH('Listan är tom','Tryck + för att lägga till en uppgift');return;}
+  el.innerHTML=cats.map(cat=>`<div class="sec"><div class="sec-lbl">${cat}</div><div class="sec-line"></div></div>`+
+    cl.filter(i=>i.cat===cat).map(item=>`
+    <div class="check-item${item.done?' done':''}" onclick="toggleCheck('${item.id}')">
+      <div class="check-circle">${item.done?'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#080918" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>':''}</div>
+      <span class="check-txt">${item.text}</span>
+      <button class="check-del" onclick="event.stopPropagation();deleteCheck('${item.id}')">${xSVG(13)}</button>
+    </div>`).join('')).join('');
   updateStats();
 }
-
-function addCheck() {
-  const text = document.getElementById('in-check').value.trim();
-  const cat  = document.getElementById('in-cat').value;
-  if (!text) return;
-  if (!state.checklist) state.checklist = [];
-  state.checklist.push({ id: Date.now().toString(), text, cat, done:false });
-  save(); closeModal('modal-check');
-  document.getElementById('in-check').value = '';
-  renderChecklist();
+function addCheck(){
+  const text=document.getElementById('in-check').value.trim(),cat=document.getElementById('in-cat').value;
+  if(!text)return;if(!state.checklist)state.checklist=[];
+  state.checklist.push({id:Date.now().toString(),text,cat,done:false});
+  save();closeModal('modal-check');document.getElementById('in-check').value='';renderChecklist();
 }
+function toggleCheck(id){const item=(state.checklist||[]).find(i=>i.id===id);if(item){item.done=!item.done;save();renderChecklist();}}
+function deleteCheck(id){state.checklist=(state.checklist||[]).filter(i=>i.id!==id);save();renderChecklist();}
 
-function toggleCheck(id) {
-  const item = (state.checklist||[]).find(i => i.id === id);
-  if (item) { item.done = !item.done; save(); renderChecklist(); }
-}
-
-function deleteCheck(id) {
-  state.checklist = (state.checklist||[]).filter(i => i.id !== id);
-  save(); renderChecklist();
-}
-
-// ── STOPS DETAIL ──────────────────────────────────────────
-const ACT_LABELS = {
-  boende:'Boende', mat:'Mat', aktivitet:'Aktivitet',
-  transport:'Transport', 'sevärdhet':'Sevärdhet', noje:'Nöje', tips:'Tips',
-  // backwards compat with old emoji keys:
-  '🏨':'Boende','🍽️':'Mat','🎡':'Aktivitet','🚂':'Transport',
-  '📸':'Sevärdhet','🎵':'Nöje','💡':'Tips'
-};
-
-function renderStops() {
-  if (!state) return;
-  const el    = document.getElementById('stops-detail');
-  const stops = state.stops || [];
-  if (!stops.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-title">Inga stopp planerade</div><div class="empty-desc">Gå till Karta och lägg till städer</div></div>';
-    return;
-  }
-  el.innerHTML = stops.map(s => `
+const ACT_LABELS={boende:'Boende',mat:'Mat',aktivitet:'Aktivitet',transport:'Transport',sevärdhet:'Sevärdhet',nöje:'Nöje',tips:'Tips','boende':'Boende','sevaerdhet':'Sevärdhet','noeje':'Nöje'};
+function renderStops(){
+  if(!state)return;
+  const el=document.getElementById('stops-detail'),stops=state.stops||[];
+  if(!stops.length){el.innerHTML=emptyH('Inga stopp planerade','Gå till Karta och lägg till städer');return;}
+  el.innerHTML=stops.map(s=>`
     <div class="stop-card">
       <div class="stop-card-head">
-        <div>
-          <div class="stop-card-city">${s.city}</div>
-          <div class="stop-card-date">${fmtDate(s.from)} — ${fmtDate(s.to)}</div>
-          ${s.isHome ? '<div class="stop-home-tag">Startpunkt</div>' : ''}
-        </div>
+        <div><div class="stop-card-city">${s.city}</div><div class="stop-card-date">${fmtDate(s.from)} - ${fmtDate(s.to)}</div></div>
+        ${s.isHome?'<span class="stop-start-tag">Startpunkt</span>':''}
       </div>
       <div class="stop-card-body">
         ${!(s.activities||[]).length
-          ? `<div style="padding:14px 16px;font-size:12px;color:var(--text-3);">Inga aktiviteter tillagda</div>`
-          : (s.activities||[]).map(a => `
-            <div class="act-row">
-              <span class="act-tag">${ACT_LABELS[a.type] || a.type}</span>
-              <span class="act-text">${a.text}</span>
-              <button class="act-del" onclick="deleteActivity('${s.id}','${a.id}')">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-            </div>
-          `).join('')
-        }
-        <button class="act-add" onclick="openActivityModal('${s.id}')">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Lägg till aktivitet
-        </button>
+          ?'<div style="padding:14px 18px;font-size:12px;color:var(--t3)">Inga aktiviteter tillagda</div>'
+          :(s.activities||[]).map(a=>`<div class="act-row"><span class="act-tag">${ACT_LABELS[a.type]||a.type}</span><span class="act-txt">${a.text}</span><button class="act-del" onclick="deleteActivity('${s.id}','${a.id}')">${xSVG(12)}</button></div>`).join('')}
+        <button class="act-add" onclick="openActivityModal('${s.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Lägg till aktivitet</button>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
-
-function openActivityModal(stopId) {
-  const sel = document.getElementById('in-act-stop');
-  sel.innerHTML = (state.stops||[]).map(s => `<option value="${s.id}">${s.city}</option>`).join('');
-  if (stopId) sel.value = stopId;
-  openModal('modal-activity');
+function openActivityModal(stopId){
+  const sel=document.getElementById('in-act-stop');
+  sel.innerHTML=(state.stops||[]).map(s=>'<option value="'+s.id+'">'+s.city+'</option>').join('');
+  if(stopId)sel.value=stopId;openModal('modal-activity');
 }
-
-function addActivity() {
-  const stopId = document.getElementById('in-act-stop').value;
-  const text   = document.getElementById('in-act-text').value.trim();
-  const type   = document.getElementById('in-act-type').value;
-  if (!text) return;
-  const stop = (state.stops||[]).find(s => s.id === stopId);
-  if (stop) {
-    if (!stop.activities) stop.activities = [];
-    stop.activities.push({ id: Date.now().toString(), text, type });
-    save();
-  }
-  closeModal('modal-activity');
-  document.getElementById('in-act-text').value = '';
-  renderStops();
+function addActivity(){
+  const stopId=document.getElementById('in-act-stop').value;
+  const text=document.getElementById('in-act-text').value.trim();
+  const type=document.getElementById('in-act-type').value;
+  if(!text)return;
+  const stop=(state.stops||[]).find(s=>s.id===stopId);
+  if(stop){if(!stop.activities)stop.activities=[];stop.activities.push({id:Date.now().toString(),text,type});save();}
+  closeModal('modal-activity');document.getElementById('in-act-text').value='';renderStops();
 }
-
-function deleteActivity(stopId, actId) {
-  const stop = (state.stops||[]).find(s => s.id === stopId);
-  if (stop) { stop.activities = (stop.activities||[]).filter(a => a.id !== actId); save(); renderStops(); }
+function deleteActivity(stopId,actId){
+  const stop=(state.stops||[]).find(s=>s.id===stopId);
+  if(stop){stop.activities=(stop.activities||[]).filter(a=>a.id!==actId);save();renderStops();}
 }
-
-// ── UTILS ─────────────────────────────────────────────────
-function fmtDate(str) {
-  if (!str) return '–';
-  return new Date(str + 'T12:00:00').toLocaleDateString('sv-SE', { day:'numeric', month:'short' });
+function fmtDate(str){if(!str)return'-';return new Date(str+'T12:00:00').toLocaleDateString('sv-SE',{day:'numeric',month:'short'});}
+function updateStats(){
+  if(!state)return;
+  const se=document.getElementById('home-stops'),ce=document.getElementById('home-checks');
+  if(se)se.textContent=(state.stops||[]).length;
+  if(ce)ce.textContent=(state.checklist||[]).filter(i=>i.done).length;
 }
-
-function updateCountdown() {
-  const diff = Math.ceil((new Date('2026-08-02') - new Date()) / 864e5);
-  const el   = document.getElementById('cd-num');
-  if (el) el.textContent = Math.max(0, diff);
+function updateCountdown(){
+  const diff=Math.ceil((new Date('2026-08-02')-new Date())/864e5);
+  const el=document.getElementById('cd-num');if(el)el.textContent=Math.max(0,diff);
 }
-
-function updateStats() {
-  if (!state) return;
-  const se = document.getElementById('home-stops');
-  const ce = document.getElementById('home-checks');
-  if (se) se.textContent = (state.stops||[]).length;
-  if (ce) ce.textContent = (state.checklist||[]).filter(i => i.done).length;
-}
-
-updateCountdown();
-setInterval(updateCountdown, 60000);
+function xSVG(s){return'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';}
+function emptyH(t,d){return'<div class="empty"><div class="empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="empty-title">'+t+'</div><div class="empty-desc">'+d+'</div></div>';}
+updateCountdown();setInterval(updateCountdown,60000);
 </script>
 </body>
 </html>
