@@ -318,7 +318,10 @@ function setSync(s){
 tripRef.onSnapshot(function(snap){
   state=snap.exists?snap.data():JSON.parse(JSON.stringify(DEFAULTS));
   if(!snap.exists)tripRef.set(DEFAULTS);
-  setSync('online'); refreshTab(); updateCountdown();
+  setSync('online');
+  renderCities();
+  if(mapInst)renderMap();
+  if(currentTab==='check')renderChecklist();
 }, function(err){
   setSync('offline');
   // Keep using the already-loaded local state
@@ -671,8 +674,10 @@ document.getElementById('stops-list').addEventListener('click',function(e){
 document.getElementById('modal-city-detail').addEventListener('click',function(e){
   var del=e.target.closest('.act-del');
   if(del){deleteActFromDetail(del.getAttribute('data-id'));return;}
-  if(e.target.id==='btn-add-act'){addActFromDetail();return;}
-  if(e.target.id==='btn-del-city'){removeStop(currentDetailStopId);closeModal('modal-city-detail');return;}
+  var addBtn=e.target.closest('#btn-add-act');
+  if(addBtn){addActFromDetail();return;}
+  var delCity=e.target.closest('#btn-del-city');
+  if(delCity){removeStop(currentDetailStopId);closeModal('modal-city-detail');return;}
 });
 document.getElementById('checklist').addEventListener('click',function(e){
   var del=e.target.closest('.check-del');
