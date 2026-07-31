@@ -310,7 +310,7 @@ function goTo(tab){
   document.getElementById('screen-'+tab).classList.add('active');
   document.getElementById('nav-'+tab).classList.add('active');
   currentTab=tab;
-  if(tab==='map'){setTimeout(initMap,80);if(state)renderMap();}
+  if(tab==='map'){setTimeout(function(){initMap();if(state)renderMap();},80);}
   if(tab==='cities'&&state)renderCities();
 }
 function refreshTab(){
@@ -628,6 +628,43 @@ document.getElementById('lightbox').addEventListener('click',function(e){
 /* ---- BOOT ---- */
 setSync('syncing');
 refreshTab();
+
+/* ---- SWIPE TO DISMISS: city detail modal ---- */
+(function(){
+  var overlay=document.getElementById('modal-city-detail');
+  var startY=0,dragging=false,lastDy=0;
+  overlay.addEventListener('touchstart',function(e){
+    if(!e.target.closest('.sheet-handle')&&!e.target.closest('.city-detail-header'))return;
+    startY=e.touches[0].clientY; dragging=true; lastDy=0;
+    var sheet=overlay.querySelector('.sheet-lg');
+    if(sheet)sheet.style.transition='none';
+  },{passive:true});
+  overlay.addEventListener('touchmove',function(e){
+    if(!dragging)return;
+    var sheet=overlay.querySelector('.sheet-lg');
+    if(!sheet)return;
+    var dy=e.touches[0].clientY-startY;
+    lastDy=dy;
+    sheet.style.transform=dy>0?'translateY('+dy+'px)':'';
+  },{passive:true});
+  overlay.addEventListener('touchend',function(){
+    if(!dragging)return;
+    dragging=false;
+    var sheet=overlay.querySelector('.sheet-lg');
+    if(!sheet)return;
+    if(lastDy>100){
+      sheet.style.transition='transform .26s cubic-bezier(.4,0,1,1)';
+      sheet.style.transform='translateY(105%)';
+      setTimeout(function(){
+        overlay.classList.remove('open');
+        sheet.style.cssText='';
+      },270);
+    } else {
+      sheet.style.transition='transform .32s cubic-bezier(.34,1.56,.64,1)';
+      sheet.style.transform='';
+    }
+  },{passive:true});
+})();
 </script>
 </body>
 </html>
