@@ -49,8 +49,8 @@
       50%{opacity:1;transform:translate(calc(-50% + var(--dx)), calc(-50% - 70px)) scale(1.4) rotate(var(--rot))}
       100%{opacity:0;transform:translate(calc(-50% + var(--dx)), calc(-50% - 130px)) scale(0.8) rotate(var(--rot))}
     }
-    .gaffa-combo-pop{position:absolute;top:-30px;left:50%;transform:translateX(-50%);font-size:16px;font-weight:900;color:var(--gold);text-shadow:0 0 10px rgba(212,168,83,0.8);pointer-events:none;opacity:0;transition:opacity .15s,transform .15s}
-    .gaffa-combo-pop.active{opacity:1;transform:translateX(-50%) scale(1.2)}
+    .gaffa-combo-pop{font-size:15px;font-weight:900;color:var(--gold);text-shadow:0 0 12px rgba(212,168,83,0.9);min-height:22px;margin:8px 0 2px;opacity:0;transform:scale(0.8);transition:opacity .15s,transform .15s}
+    .gaffa-combo-pop.active{opacity:1;transform:scale(1.15)}
     .gaffa-card-main.frenzy{animation:gaffaPulse 0.4s ease-in-out infinite alternate;border-color:#FFF;box-shadow:0 0 40px rgba(212,168,83,0.8)}
     @keyframes gaffaPulse{from{transform:scale(1)}to{transform:scale(1.03)}}
 
@@ -287,6 +287,7 @@
     <div style="font-size:42px;margin-top:8px">👑</div>
     <div class="gaffa-title">THE GAFFA</div>
     <div class="gaffa-subtitle">MOLLE — THE REAL FUCKING GAFFA</div>
+    <div class="gaffa-combo-pop" id="gaffa-combo"></div>
     
     <div class="gaffa-card-main">
       <div class="gaffa-avatar">M</div>
@@ -299,9 +300,9 @@
       </div>
     </div>
 
-    <div style="position:relative;width:100%"><div class="gaffa-combo-pop" id="gaffa-combo"></div><button class="btn-respect-gaffa" id="btn-respect-gaffa" onclick="respectGaffa(event)">
+    <button class="btn-respect-gaffa" id="btn-respect-gaffa" onclick="respectGaffa(event)">
       👑 RESPECT THE GAFFA (<span id="gaffa-count">0</span>)
-    </button></div>
+    </button>
     <button class="btn-cancel" onclick="closeModal('modal-gaffa')" style="margin-top:12px">Stäng</button>
   </div>
 </div>
@@ -313,7 +314,7 @@
     <div class="sheet-title">Lägg till stad</div>
     <div class="form-grp"><label class="form-lbl">Stad</label><input class="finput" id="in-city" placeholder="t.ex. Berlin" autocomplete="off" inputmode="text"/><div class="geo-hint" id="geo-hint"></div></div>
     <div class="form-grp"><label class="form-lbl">Datum</label><div class="form-row"><input class="finput" id="in-from" type="date" min="2026-08-02" max="2026-08-16"/><input class="finput" id="in-to" type="date" min="2026-08-02" max="2026-08-16"/></div></div>
-    <button class="btn-main" id="city-add-btn" onclick="geocodeAndAdd()">Lägg till</button></div>
+    <button class="btn-main" id="city-add-btn" onclick="geocodeAndAdd()">Lägg till</button>
     <button class="btn-cancel" onclick="closeModal('modal-add-city')">Avbryt</button>
   </div>
 </div>
@@ -410,7 +411,35 @@ let gaffaCombo = 0;
 let comboTimer = null;
 const EMOJIS = ['👑', '⚡', '🔥', '💎', '🏆', '⭐', '✨'];
 
+
+// Web Audio API pop sound (rising pitch with combo for iOS & Android)
+let audioCtx = null;
+function playPopSound(){
+  try {
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    
+    osc.type = 'sine';
+    const pitch = 320 + Math.min(600, (gaffaCombo * 22));
+    osc.frequency.setValueAtTime(pitch, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(pitch * 1.5, audioCtx.currentTime + 0.06);
+    
+    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.06);
+    
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.07);
+  } catch(e){}
+}
+
 function respectGaffa(e){
+  playPopSound();
   if(!state) return;
   state.gaffaRespects = (state.gaffaRespects || 0) + 1;
   save();
