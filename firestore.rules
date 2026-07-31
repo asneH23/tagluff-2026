@@ -4,5 +4,8 @@ service cloud.firestore {
     match /trips/{document=**} {
       allow read, write: if true;
     }
+    match /images/{document=**} {
+      allow read, write: if true;
+    }
   }
 }
