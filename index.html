@@ -41,6 +41,19 @@
     .gaffa-badge:active{transform:scale(.92)}
     .gaffa-badge:hover{box-shadow:0 0 12px rgba(212,168,83,0.4)}
     
+    
+    /* GAFFA CLICKER MINI-GAME */
+    .gaffa-particle{position:fixed;pointer-events:none;font-size:24px;font-weight:900;z-index:999;animation:particleFly 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards}
+    @keyframes particleFly{
+      0%{opacity:1;transform:translate(-50%, -50%) scale(0.6) rotate(0deg)}
+      50%{opacity:1;transform:translate(calc(-50% + var(--dx)), calc(-50% - 70px)) scale(1.4) rotate(var(--rot))}
+      100%{opacity:0;transform:translate(calc(-50% + var(--dx)), calc(-50% - 130px)) scale(0.8) rotate(var(--rot))}
+    }
+    .gaffa-combo-pop{position:absolute;top:-30px;left:50%;transform:translateX(-50%);font-size:16px;font-weight:900;color:var(--gold);text-shadow:0 0 10px rgba(212,168,83,0.8);pointer-events:none;opacity:0;transition:opacity .15s,transform .15s}
+    .gaffa-combo-pop.active{opacity:1;transform:translateX(-50%) scale(1.2)}
+    .gaffa-card-main.frenzy{animation:gaffaPulse 0.4s ease-in-out infinite alternate;border-color:#FFF;box-shadow:0 0 40px rgba(212,168,83,0.8)}
+    @keyframes gaffaPulse{from{transform:scale(1)}to{transform:scale(1.03)}}
+
     /* GAFFA MODAL STYLES */
     .gaffa-title{font-size:26px;font-weight:900;letter-spacing:-0.8px;color:var(--gold);margin-top:4px}
     .gaffa-subtitle{font-size:12px;color:var(--t3);font-weight:500;margin-top:2px}
@@ -286,9 +299,9 @@
       </div>
     </div>
 
-    <button class="btn-respect-gaffa" id="btn-respect-gaffa" onclick="respectGaffa()">
+    <div style="position:relative;width:100%"><div class="gaffa-combo-pop" id="gaffa-combo"></div><button class="btn-respect-gaffa" id="btn-respect-gaffa" onclick="respectGaffa(event)">
       👑 RESPECT THE GAFFA (<span id="gaffa-count">0</span>)
-    </button>
+    </button></div>
     <button class="btn-cancel" onclick="closeModal('modal-gaffa')" style="margin-top:12px">Stäng</button>
   </div>
 </div>
@@ -300,7 +313,7 @@
     <div class="sheet-title">Lägg till stad</div>
     <div class="form-grp"><label class="form-lbl">Stad</label><input class="finput" id="in-city" placeholder="t.ex. Berlin" autocomplete="off" inputmode="text"/><div class="geo-hint" id="geo-hint"></div></div>
     <div class="form-grp"><label class="form-lbl">Datum</label><div class="form-row"><input class="finput" id="in-from" type="date" min="2026-08-02" max="2026-08-16"/><input class="finput" id="in-to" type="date" min="2026-08-02" max="2026-08-16"/></div></div>
-    <button class="btn-main" id="city-add-btn" onclick="geocodeAndAdd()">Lägg till</button>
+    <button class="btn-main" id="city-add-btn" onclick="geocodeAndAdd()">Lägg till</button></div>
     <button class="btn-cancel" onclick="closeModal('modal-add-city')">Avbryt</button>
   </div>
 </div>
@@ -392,13 +405,78 @@ function getAccentIdx(stopId){
 }
 
 
-/* ---- GAFFA RESPECTS ---- */
-function respectGaffa(){
+/* ---- GAFFA RESPECTS MINI-GAME ---- */
+let gaffaCombo = 0;
+let comboTimer = null;
+const EMOJIS = ['👑', '⚡', '🔥', '💎', '🏆', '⭐', '✨'];
+
+function respectGaffa(e){
   if(!state) return;
   state.gaffaRespects = (state.gaffaRespects || 0) + 1;
   save();
   updateGaffaCount();
+
+  // Haptic feedback
+  try { if(navigator.vibrate) navigator.vibrate(35); } catch(ex){}
+
+  // Combo Streak
+  gaffaCombo++;
+  clearTimeout(comboTimer);
+  comboTimer = setTimeout(function(){
+    gaffaCombo = 0;
+    const cEl = document.getElementById('gaffa-combo');
+    if(cEl) cEl.classList.remove('active');
+    const mainCard = document.querySelector('.gaffa-card-main');
+    if(mainCard) mainCard.classList.remove('frenzy');
+  }, 1400);
+
+  // Update combo pop text
+  const cEl = document.getElementById('gaffa-combo');
+  if(cEl){
+    let txt = '';
+    if(gaffaCombo >= 30) txt = `👑 ${gaffaCombo}x GODLIKE GAFFA!`;
+    else if(gaffaCombo >= 15) txt = `⚡ ${gaffaCombo}x GAFFA FRENZY!`;
+    else if(gaffaCombo >= 5) txt = `🔥 ${gaffaCombo}x COMBO!`;
+    else if(gaffaCombo >= 2) txt = `${gaffaCombo}x RESPECT!`;
+    
+    cEl.textContent = txt;
+    if(txt) cEl.classList.add('active');
+  }
+
+  // Frenzy pulse effect on main card for 10+ combo
+  const mainCard = document.querySelector('.gaffa-card-main');
+  if(mainCard){
+    if(gaffaCombo >= 10) mainCard.classList.add('frenzy');
+  }
+
+  // Spawn flying particles
+  spawnGaffaParticle(e);
 }
+
+function spawnGaffaParticle(e){
+  const btn = document.getElementById('btn-respect-gaffa');
+  if(!btn) return;
+  
+  const rect = btn.getBoundingClientRect();
+  const clickX = (e && e.clientX) ? e.clientX : (rect.left + rect.width / 2);
+  const clickY = (e && e.clientY) ? e.clientY : (rect.top + rect.height / 2);
+
+  const emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+  const p = document.createElement('div');
+  p.className = 'gaffa-particle';
+  p.textContent = emoji;
+  
+  const dx = (Math.random() - 0.5) * 160;
+  const rot = (Math.random() - 0.5) * 60;
+  p.style.setProperty('--dx', dx + 'px');
+  p.style.setProperty('--rot', rot + 'deg');
+  p.style.left = clickX + 'px';
+  p.style.top = clickY + 'px';
+
+  document.body.appendChild(p);
+  setTimeout(function(){ try{ p.remove(); }catch(ex){} }, 800);
+}
+
 function updateGaffaCount(){
   const el = document.getElementById('gaffa-count');
   if(el && state) el.textContent = state.gaffaRespects || 0;
