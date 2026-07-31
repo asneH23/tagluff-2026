@@ -714,6 +714,7 @@ document.getElementById('lightbox').addEventListener('click',function(e){
 
 /* ---- UPPTÄCK / TINDER DISCOVERY ---- */
 const DISCOVER_SPOTS = [
+  // BERLIN
   {
     id: 'b1', city: 'Berlin', category: 'nattliv', actType: 'noje', price: '€€',
     title: 'KitKatClub & Berghain Nightlife',
@@ -722,7 +723,7 @@ const DISCOVER_SPOTS = [
   },
   {
     id: 'b2', city: 'Berlin', category: 'mat', actType: 'mat', price: '€',
-    title: 'Curry 36 & Mustafa’s Gemüse Kebap',
+    title: 'Curry 36 & Mustafa’s Kebap',
     desc: 'Legendarisk döner och currywurst i Kreuzberg.',
     img: 'https://images.unsplash.com/photo-1561758033-d89a9ad46330?auto=format&fit=crop&w=800&q=80'
   },
@@ -733,6 +734,14 @@ const DISCOVER_SPOTS = [
     img: 'https://images.unsplash.com/photo-1584003564911-a7a321c84e1c?auto=format&fit=crop&w=800&q=80'
   },
   {
+    id: 'b4', city: 'Berlin', category: 'sevardhet', actType: 'sevardhet', price: '€',
+    title: 'East Side Gallery & Spree',
+    desc: 'Världens längsta utomhusgalleri på den bevarade Berlinmuren vid floden Spree.',
+    img: 'https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=800&q=80'
+  },
+
+  // PRAG
+  {
     id: 'p1', city: 'Prag', category: 'mat', actType: 'mat', price: '€',
     title: 'Letná Beer Garden',
     desc: 'Kall tjeckisk öl i skuggan av träden med stans bästa utsikt över Vltava.',
@@ -740,8 +749,8 @@ const DISCOVER_SPOTS = [
   },
   {
     id: 'p2', city: 'Prag', category: 'nattliv', actType: 'noje', price: '€€',
-    title: 'Cross Club',
-    desc: 'Unik futuristisk steampunk-klubb med underground-vibes och DJs.',
+    title: 'Cross Club & Karlovy Lázně',
+    desc: 'Unik futuristisk steampunk-klubb med underground-vibes eller 5-våningsklubben vid bron.',
     img: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80'
   },
   {
@@ -751,9 +760,17 @@ const DISCOVER_SPOTS = [
     img: 'https://images.unsplash.com/photo-1541849546-216549e82894?auto=format&fit=crop&w=800&q=80'
   },
   {
+    id: 'p4', city: 'Prag', category: 'gomda', actType: 'tips', price: '€',
+    title: 'Vyšehrad fästning & Park',
+    desc: 'Lugn historisk fästning högt ovanför floden med färre turister och grym utsikt.',
+    img: 'https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=800&q=80'
+  },
+
+  // BUDAPEST
+  {
     id: 'bp1', city: 'Budapest', category: 'nattliv', actType: 'noje', price: '€',
-    title: 'Szimpla Kert Ruin Bar',
-    desc: 'Den ursprungliga ruinbaren i gamla judiska kvarteren – ett måste!',
+    title: 'Szimpla Kert & Instant-Fogas',
+    desc: 'De ursprungliga ruinbarerna i gamla judiska kvarteren – labyrinter av barer.',
     img: 'https://images.unsplash.com/photo-1572116469696-31de0f17cc34?auto=format&fit=crop&w=800&q=80'
   },
   {
@@ -768,6 +785,8 @@ const DISCOVER_SPOTS = [
     desc: 'Panorama över parlamentet och Donau upplyst i guld på natten.',
     img: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=800&q=80'
   },
+
+  // AMSTERDAM
   {
     id: 'a1', city: 'Amsterdam', category: 'mat', actType: 'mat', price: '€€',
     title: 'Foodhallen & Stroopwafels',
@@ -781,6 +800,14 @@ const DISCOVER_SPOTS = [
     img: 'https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?auto=format&fit=crop&w=800&q=80'
   },
   {
+    id: 'a3', city: 'Amsterdam', category: 'sevardhet', actType: 'sevardhet', price: '€€€',
+    title: 'A’DAM Lookout Over-The-Edge Swing',
+    desc: 'Gunga på taket av ett skyskrapehus 100 meter upp i luften.',
+    img: 'https://images.unsplash.com/photo-1605548230624-8d2d0419c517?auto=format&fit=crop&w=800&q=80'
+  },
+
+  // WIEN
+  {
     id: 'w1', city: 'Wien', category: 'mat', actType: 'mat', price: '€€',
     title: 'Naschmarkt & Schnitzel',
     desc: 'Matmarknad med färska delikatesser, falafel och klassisk Wiener Schnitzel.',
@@ -793,6 +820,42 @@ const DISCOVER_SPOTS = [
     img: 'https://images.unsplash.com/photo-1516550893923-42d28e5677af?auto=format&fit=crop&w=800&q=80'
   },
   {
+    id: 'w3', city: 'Wien', category: 'sevardhet', actType: 'sevardhet', price: '€',
+    title: 'Schönbrunn Slottsträdgård',
+    desc: 'Barockpalats med enorma trädgårdar och storslagen utsikt över staden.',
+    img: 'https://images.unsplash.com/photo-1520550854497-6a9829f0460c?auto=format&fit=crop&w=800&q=80'
+  },
+
+  // MÜNCHEN
+  {
+    id: 'm1', city: 'München', category: 'gomda', actType: 'aktivitet', price: '€',
+    title: 'Eisbachwelle Flodsurfing',
+    desc: 'Kolla in lokala surfare som rider på en stående våg mitt i Englischer Garten.',
+    img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'm2', city: 'München', category: 'mat', actType: 'mat', price: '€€',
+    title: 'Hofbräuhaus & Biergarten',
+    desc: 'Världens mest kända ölhall – 1-liters mass öl, brezeln och live mässingsorkester.',
+    img: 'https://images.unsplash.com/photo-1571624436279-b272aff752b5?auto=format&fit=crop&w=800&q=80'
+  },
+
+  // ROM
+  {
+    id: 'r1', city: 'Rom', category: 'nattliv', actType: 'noje', price: '€€',
+    title: 'Trastevere Barer & Aperitivo',
+    desc: 'Mysiga kullerstensgränder med livliga barer, spritz och utomhusserveringar.',
+    img: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'r2', city: 'Rom', category: 'sevardhet', actType: 'sevardhet', price: '€€',
+    title: 'Colosseum & Forum Romanum',
+    desc: 'Det antika Roms mäktigaste amfiteater – upplev historien på nära håll.',
+    img: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=800&q=80'
+  },
+
+  // SPLIT
+  {
     id: 's1', city: 'Split', category: 'nattliv', actType: 'noje', price: '€€€',
     title: 'Hvar & Carpe Diem Beach Club',
     desc: 'Dagsutflykt till Hvar med båt och beach party i kristallklart vatten.',
@@ -804,11 +867,19 @@ const DISCOVER_SPOTS = [
     desc: 'Gå upp för trapporna till utsiktspunkten för den vackraste solnedgången.',
     img: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80'
   },
+
+  // KÖPENHAMN
   {
     id: 'k1', city: 'Köpenhamn', category: 'mat', actType: 'mat', price: '€€',
     title: 'Reffen Street Food',
     desc: 'Utomhusmatmarknad i hamnen med öl, musik och containrar.',
     img: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'k2', city: 'Köpenhamn', category: 'gomda', actType: 'tips', price: '€',
+    title: 'Freetown Christiania',
+    desc: 'Unikt bilfritt fristadsområde med färgglad konst, livemusik och caféer.',
+    img: 'https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?auto=format&fit=crop&w=800&q=80'
   }
 ];
 
@@ -817,8 +888,37 @@ let spotQueue = [];
 let historyStack = [];
 
 function getFilteredSpots(){
-  if(activeCategory==='all') return [...DISCOVER_SPOTS];
-  return DISCOVER_SPOTS.filter(s => s.category === activeCategory);
+  let list = (activeCategory === 'all')
+    ? [...DISCOVER_SPOTS]
+    : DISCOVER_SPOTS.filter(s => s.category === activeCategory);
+
+  // Smart Mix & Prioritization:
+  // 1. Collect cities currently in itinerary (state.stops)
+  const itineraryCities = (state && state.stops ? state.stops.map(s => s.city.toLowerCase().trim()) : []);
+
+  // Split into matched itinerary spots and other spots
+  const matched = list.filter(s => itineraryCities.includes(s.city.toLowerCase().trim()));
+  const others = list.filter(s => !itineraryCities.includes(s.city.toLowerCase().trim()));
+
+  // Interleave/mix function to avoid showing same city consecutively
+  function interleave(arr){
+    const result = [];
+    const copy = [...arr];
+    let lastCity = '';
+    while(copy.length > 0){
+      let idx = copy.findIndex(item => item.city !== lastCity);
+      if(idx === -1) idx = 0;
+      const [item] = copy.splice(idx, 1);
+      result.push(item);
+      lastCity = item.city;
+    }
+    return result;
+  }
+
+  const mixedMatched = interleave(matched);
+  const mixedOthers = interleave(others);
+
+  return [...mixedMatched, ...mixedOthers];
 }
 
 function initTinderQueue(){
