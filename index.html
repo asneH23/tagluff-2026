@@ -422,8 +422,7 @@ function openCityDetail(id){
   buildDetailContent(stop);
   openModal('modal-city-detail');
   loadStopImages(id);
-  fetchLiveCitySuggestions(stop.city, id);
-}
+  }
 
 function buildDetailContent(stop){
   const info=getAccentIdx(stop.id);
@@ -446,8 +445,7 @@ function buildDetailContent(stop){
     +'<div id="detail-imgs"><div class="no-acts-txt">Laddar bilder...</div></div>'
     +'<label class="btn-add-img" for="img-inp">+ L\u00e4gg till bild</label>'
     +'<input type="file" id="img-inp" accept="image/*" style="display:none"/>'
-    +'<div class="sec" style="margin:20px 0 10px"><div class="sec-lbl">Live-förslag f\u00f6r '+stop.city+'</div><div class="sec-line"></div></div>'
-    +'<div id="detail-suggestions"><div class="no-acts-txt">S\u00f6ker f\u00f6rslag f\u00f6r '+stop.city+'\u2026</div></div>'
+
     +'<div class="sec" style="margin:20px 0 10px"><div class="sec-lbl">Aktiviteter</div><div class="sec-line"></div></div>'
     +'<div id="detail-acts-list">'+actsHtml+'</div>'
     +'<div class="sec" style="margin:20px 0 10px"><div class="sec-lbl">L\u00e4gg till aktivitet</div><div class="sec-line"></div></div>'
