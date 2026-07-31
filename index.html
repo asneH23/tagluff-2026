@@ -37,7 +37,30 @@
     .topbar-row{display:flex;align-items:center;justify-content:space-between}
     .topbar h1{font-size:16px;font-weight:600;color:var(--t1);letter-spacing:-0.1px}
     .topbar-right{display:flex;align-items:center;gap:10px}
-    .cd-badge{font-size:12px;font-weight:700;color:var(--gold);letter-spacing:-0.3px}
+    .gaffa-badge{font-size:11px;font-weight:800;color:var(--gold);background:var(--gold-dim);border:1px solid var(--gold);padding:4px 10px;border-radius:20px;letter-spacing:-0.2px;cursor:pointer;transition:transform .12s,box-shadow .12s}
+    .gaffa-badge:active{transform:scale(.92)}
+    .gaffa-badge:hover{box-shadow:0 0 12px rgba(212,168,83,0.4)}
+    
+    /* GAFFA MODAL STYLES */
+    .gaffa-title{font-size:26px;font-weight:900;letter-spacing:-0.8px;color:var(--gold);margin-top:4px}
+    .gaffa-subtitle{font-size:12px;color:var(--t3);font-weight:500;margin-top:2px}
+    .gaffa-card-main{margin-top:16px;background:linear-gradient(135deg,rgba(212,168,83,0.15) 0%,rgba(99,102,241,0.1) 100%);border:1.5px solid var(--gold);border-radius:20px;padding:20px 16px;display:flex;flex-direction:column;align-items:center;box-shadow:0 12px 32px rgba(212,168,83,0.25)}
+    .gaffa-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--gold-hi),var(--gold));color:#080918;font-size:28px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(212,168,83,0.5);border:2px solid #fff}
+    .gaffa-name{font-size:22px;font-weight:800;color:#fff;margin-top:8px}
+    .gaffa-role-tag{font-size:10px;font-weight:800;letter-spacing:1px;color:var(--gold);background:rgba(212,168,83,0.2);padding:3px 10px;border-radius:12px;margin-top:4px;border:1px solid rgba(212,168,83,0.4)}
+    .gaffa-rules{margin-top:12px;display:flex;flex-direction:column;gap:4px;text-align:center}
+    .gaffa-rule{font-size:12px;font-weight:600;color:rgba(255,255,255,0.9);font-style:italic}
+    
+    .crew-list{display:flex;flex-direction:column;gap:8px;text-align:left}
+    .crew-item{display:flex;align-items:center;gap:12px;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r-sm);padding:10px 14px}
+    .crew-avatar{width:36px;height:36px;border-radius:50%;background:var(--s2);color:var(--t1);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px;border:1px solid var(--b2)}
+    .crew-info{flex:1;min-width:0}
+    .crew-name{font-size:14px;font-weight:700;color:var(--t1)}
+    .crew-role{font-size:11px;color:var(--t3);margin-top:1px}
+    .crew-rank{font-size:12px;font-weight:800;color:var(--t3)}
+    
+    .btn-respect-gaffa{width:100%;margin-top:18px;padding:14px;background:linear-gradient(135deg,var(--gold-hi),var(--gold));border:none;border-radius:var(--r-sm);color:#080918;font-size:14px;font-weight:900;font-family:var(--font);cursor:pointer;box-shadow:0 4px 20px rgba(212,168,83,0.4);transition:transform .12s}
+    .btn-respect-gaffa:active{transform:scale(.96)}
     .sync-pill{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:var(--t3);padding:4px 9px;border-radius:20px;border:1px solid var(--b1);background:var(--s1)}
     .sync-dot{width:5px;height:5px;border-radius:50%;background:var(--t3);transition:background .3s}
     .sync-pill.online .sync-dot{background:var(--green);box-shadow:0 0 6px rgba(74,222,128,.5)}
@@ -242,6 +265,58 @@
   <img id="lightbox-img" alt="bild" />
 </div>
 
+
+<!-- MODAL: THE GAFFA & CREW -->
+<div class="overlay" id="modal-gaffa">
+  <div class="sheet sheet-lg" style="text-align:center">
+    <div class="sheet-handle"></div>
+    <div style="font-size:36px;margin-top:8px">👑</div>
+    <div class="gaffa-title">THE GAFFA</div>
+    <div class="gaffa-subtitle">Tågluff 2026 Official Crew Ranks</div>
+    
+    <div class="gaffa-card-main">
+      <div class="gaffa-avatar">M</div>
+      <div class="gaffa-name">Molle</div>
+      <div class="gaffa-role-tag">SUPREME GAFFA · RANK #1</div>
+      <div class="gaffa-rules">
+        <div class="gaffa-rule">⚡ "Respect The Gaffa at all times"</div>
+        <div class="gaffa-rule">📜 "Gaffas ord är lag under hela resan"</div>
+      </div>
+    </div>
+
+    <div class="sec" style="margin:20px 0 10px"><div class="sec-lbl">Resten av gänget</div><div class="sec-line"></div></div>
+
+    <div class="crew-list">
+      <div class="crew-item">
+        <div class="crew-avatar">A</div>
+        <div class="crew-info"><div class="crew-name">Aston</div><div class="crew-role">Deputy Gaffa &amp; Tech Lead</div></div>
+        <span class="crew-rank">#2</span>
+      </div>
+      <div class="crew-item">
+        <div class="crew-avatar">J</div>
+        <div class="crew-info"><div class="crew-name">Jacob</div><div class="crew-role">Chief Beer &amp; Vibe Officer</div></div>
+        <span class="crew-rank">#3</span>
+      </div>
+      <div class="crew-item">
+        <div class="crew-avatar">C</div>
+        <div class="crew-info"><div class="crew-name">Cesar</div><div class="crew-role">Route &amp; Navigation Master</div></div>
+        <span class="crew-rank">#4</span>
+      </div>
+      <div class="crew-item">
+        <div class="crew-avatar">I</div>
+        <div class="crew-info"><div class="crew-name">Ivar</div><div class="crew-role">Hype Manager &amp; Party Lead</div></div>
+        <span class="crew-rank">#5</span>
+      </div>
+    </div>
+
+    <button class="btn-respect-gaffa" id="btn-respect-gaffa" onclick="respectGaffa()">
+      👑 RESPECT THE GAFFA (<span id="gaffa-count">0</span>)
+    </button>
+    <button class="btn-cancel" onclick="closeModal('modal-gaffa')" style="margin-top:10px">Stäng</button>
+  </div>
+</div>
+
+
 <!-- MODAL: add city -->
 <div class="overlay" id="modal-add-city">
   <div class="sheet">
@@ -300,7 +375,7 @@ function setSync(s){
 tripRef.onSnapshot(function(snap){
   state=snap.exists?snap.data():JSON.parse(JSON.stringify(DEFAULTS));
   if(!snap.exists)tripRef.set(DEFAULTS);
-  setSync('online'); renderCities(); if(mapInst)renderMap();
+  setSync('online'); renderCities(); if(mapInst)renderMap(); updateGaffaCount();
 },function(err){setSync('offline');});
 
 function save(){
@@ -338,6 +413,19 @@ function getAccentIdx(stopId){
     if(s.id===stopId)return{acc:ACCENTS[n===0?0:((n-1)%(ACCENTS.length-1))+1],n:n};
   }
   return{acc:ACCENTS[1],n:1};
+}
+
+
+/* ---- GAFFA RESPECTS ---- */
+function respectGaffa(){
+  if(!state) return;
+  state.gaffaRespects = (state.gaffaRespects || 0) + 1;
+  save();
+  updateGaffaCount();
+}
+function updateGaffaCount(){
+  const el = document.getElementById('gaffa-count');
+  if(el && state) el.textContent = state.gaffaRespects || 0;
 }
 
 /* ---- CITIES ---- */
