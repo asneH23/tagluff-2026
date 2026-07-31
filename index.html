@@ -196,6 +196,7 @@
       <div class="topbar-row">
         <h1>Tågluff 2026</h1>
         <div class="topbar-right">
+          <button class="gaffa-badge" onclick="openModal('modal-gaffa')">👑 THE GAFFA</button>
           <div class="sync-pill syncing" id="sync-pill"><div class="sync-dot"></div><span id="sync-txt">Ansluter</span></div>
         </div>
       </div>
@@ -266,56 +267,31 @@
 </div>
 
 
-<!-- MODAL: THE GAFFA & CREW -->
+<!-- MODAL: THE GAFFA -->
 <div class="overlay" id="modal-gaffa">
   <div class="sheet sheet-lg" style="text-align:center">
     <div class="sheet-handle"></div>
-    <div style="font-size:36px;margin-top:8px">👑</div>
+    <div style="font-size:42px;margin-top:8px">👑</div>
     <div class="gaffa-title">THE GAFFA</div>
-    <div class="gaffa-subtitle">Tågluff 2026 Official Crew Ranks</div>
+    <div class="gaffa-subtitle">MOLLE — SUPREME COMMANDER</div>
     
     <div class="gaffa-card-main">
       <div class="gaffa-avatar">M</div>
       <div class="gaffa-name">Molle</div>
-      <div class="gaffa-role-tag">SUPREME GAFFA · RANK #1</div>
+      <div class="gaffa-role-tag">THE ONE AND ONLY GAFFA</div>
       <div class="gaffa-rules">
         <div class="gaffa-rule">⚡ "Respect The Gaffa at all times"</div>
         <div class="gaffa-rule">📜 "Gaffas ord är lag under hela resan"</div>
-      </div>
-    </div>
-
-    <div class="sec" style="margin:20px 0 10px"><div class="sec-lbl">Resten av gänget</div><div class="sec-line"></div></div>
-
-    <div class="crew-list">
-      <div class="crew-item">
-        <div class="crew-avatar">A</div>
-        <div class="crew-info"><div class="crew-name">Aston</div><div class="crew-role">Deputy Gaffa &amp; Tech Lead</div></div>
-        <span class="crew-rank">#2</span>
-      </div>
-      <div class="crew-item">
-        <div class="crew-avatar">J</div>
-        <div class="crew-info"><div class="crew-name">Jacob</div><div class="crew-role">Chief Beer &amp; Vibe Officer</div></div>
-        <span class="crew-rank">#3</span>
-      </div>
-      <div class="crew-item">
-        <div class="crew-avatar">C</div>
-        <div class="crew-info"><div class="crew-name">Cesar</div><div class="crew-role">Route &amp; Navigation Master</div></div>
-        <span class="crew-rank">#4</span>
-      </div>
-      <div class="crew-item">
-        <div class="crew-avatar">I</div>
-        <div class="crew-info"><div class="crew-name">Ivar</div><div class="crew-role">Hype Manager &amp; Party Lead</div></div>
-        <span class="crew-rank">#5</span>
+        <div class="gaffa-rule">👑 "Alla beslut fattas eller godkänns av Gaffa"</div>
       </div>
     </div>
 
     <button class="btn-respect-gaffa" id="btn-respect-gaffa" onclick="respectGaffa()">
       👑 RESPECT THE GAFFA (<span id="gaffa-count">0</span>)
     </button>
-    <button class="btn-cancel" onclick="closeModal('modal-gaffa')" style="margin-top:10px">Stäng</button>
+    <button class="btn-cancel" onclick="closeModal('modal-gaffa')" style="margin-top:12px">Stäng</button>
   </div>
 </div>
-
 
 <!-- MODAL: add city -->
 <div class="overlay" id="modal-add-city">
