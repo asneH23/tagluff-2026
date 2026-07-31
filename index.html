@@ -106,25 +106,7 @@
     .date-edit-grp{flex:1;display:flex;flex-direction:column;gap:5px}
     .date-inp{color-scheme:dark}
 
-    /* FÖRSLAG TAB (BIG VISUAL HERO CARDS) */
-    .sug-city-bar{display:flex;gap:8px;overflow-x:auto;padding-top:12px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-    .sug-city-bar::-webkit-scrollbar{display:none}
-    .sug-city-pill{padding:7px 14px;border-radius:20px;background:rgba(255,255,255,0.06);border:1px solid var(--b1);color:var(--t3);font-size:13px;font-weight:600;font-family:var(--font);white-space:nowrap;cursor:pointer;transition:all .18s}
-    .sug-city-pill.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
-    .sug-city-pill:active{transform:scale(.96)}
-
-    .sug-content{padding:16px 20px 30px;display:flex;flex-direction:column;gap:18px}
-    .sug-hero-card{background:var(--s1);border:1px solid rgba(255,255,255,0.12);border-radius:20px;overflow:hidden;box-shadow:0 12px 32px rgba(0,0,0,0.4);display:flex;flex-direction:column}
-    .sug-hero-img-wrap{position:relative;width:100%;height:190px;background:var(--s2);overflow:hidden}
-    .sug-hero-img{width:100%;height:100%;object-fit:cover;display:block}
-    .sug-hero-badge{position:absolute;top:12px;left:12px;background:rgba(8,9,24,0.75);backdrop-filter:blur(10px);padding:4px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.6px}
-    .sug-hero-body{padding:16px;display:flex;flex-direction:column;gap:8px}
-    .sug-hero-title{font-size:19px;font-weight:800;color:var(--t1);letter-spacing:-0.4px;line-height:1.2}
-    .sug-hero-desc{font-size:13px;color:var(--t2);line-height:1.45;font-weight:400;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-    .btn-sug-hero-save{margin-top:6px;width:100%;padding:12px;background:var(--gold-dim);border:1px solid var(--gold);border-radius:var(--r-sm);color:var(--gold);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px}
-    .btn-sug-hero-save:active{transform:scale(.98);background:var(--gold);color:#080918}
-    .btn-sug-hero-save.saved{background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.4);color:#6EE7B7}
-/* MAP */
+    /* MAP */
     #map{height:300px;width:100%}
     .leaflet-container{font-family:var(--font)!important;background:#06070F!important}
     .leaflet-popup-content-wrapper{background:rgba(10,11,28,.96)!important;border:1px solid var(--b2)!important;border-radius:10px!important;box-shadow:0 8px 32px rgba(0,0,0,.5)!important;color:var(--t1)!important}
@@ -217,20 +199,7 @@
 
 
   
-  <!-- FÖRSLAG (SUGGESTIONS) SCREEN -->
-  <div id="screen-sug" class="screen">
-    <div class="topbar">
-      <div class="topbar-row">
-        <h1>Sevärdheter &amp; Förslag</h1>
-        <span class="cd-badge">TÅGLUFF 2026</span>
-      </div>
-      <div class="sug-city-bar" id="sug-city-bar"></div>
-    </div>
-    
-    <div class="sug-content" id="sug-content">
-      <div class="no-acts-txt" style="margin-top:40px">Välj en stad för att se förslag</div>
-    </div>
-  </div>
+
 
   <nav class="bottom-nav">
     <button class="nav-btn active" id="nav-cities" onclick="goTo('cities')">
@@ -254,14 +223,7 @@
     </button>
 
   
-      <button class="nav-btn" id="nav-sug" onclick="goTo('sug')">
-      <div class="nav-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
-        </svg>
-      </div>
-      <span class="nav-lbl">Förslag</span>
-    </button>
+  
   </nav>
 </div>
 
@@ -358,7 +320,6 @@ function goTo(tab){
   currentTab=tab;
   if(tab==='map'){setTimeout(function(){initMap();if(state)renderMap();},80);}
   if(tab==='cities'&&state)renderCities();
-  if(tab==='sug')renderSugTab();
 }
 function refreshTab(){
   if(currentTab==='cities')renderCities();
@@ -693,129 +654,6 @@ function renderMap(){
   el.innerHTML=html;
 }
 
-
-/* ---- FÖRSLAG TAB LOGIC ---- */
-let selectedSugCity = '';
-
-function renderSugTab(){
-  if(!state) return;
-  const stops = state.stops || [];
-  const bar = document.getElementById('sug-city-bar');
-  if(!bar) return;
-
-  if(!stops.length){
-    bar.innerHTML = '';
-    document.getElementById('sug-content').innerHTML = emptyH('Inga städer planerade', 'Lägg till en stad under Städer först');
-    return;
-  }
-
-  // Ensure selectedSugCity is valid
-  if(!selectedSugCity || !stops.some(s => s.city.toLowerCase() === selectedSugCity.toLowerCase())){
-    selectedSugCity = stops[0].city;
-  }
-
-  // Render city pills
-  let pillsHtml = '';
-  stops.forEach(s => {
-    const active = s.city.toLowerCase() === selectedSugCity.toLowerCase() ? 'active' : '';
-    pillsHtml += `<button class="sug-city-pill ${active}" data-sugcity="${s.city}">📍 ${s.city}</button>`;
-  });
-  bar.innerHTML = pillsHtml;
-
-  // Load suggestions for selected city
-  loadSugCityCards(selectedSugCity);
-}
-
-function loadSugCityCards(cityName){
-  const content = document.getElementById('sug-content');
-  if(!content) return;
-
-  content.innerHTML = `<div class="no-acts-txt" style="margin-top:30px">Hämtar kända sevärdheter i ${cityName}…</div>`;
-
-  // Fetch top Wikipedia articles with high-res thumbnails & extracts for cityName
-  const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(cityName + ' famous landmarks tourist attraction sights')}&gsrlimit=7&prop=pageimages|extracts&piprop=thumbnail&pithumbsize=800&exintro=1&explaintext=1&format=json&origin=*`;
-
-  fetch(url).then(r => r.json()).then(data => {
-    if(cityName.toLowerCase() !== selectedSugCity.toLowerCase()) return; // stale check
-    const pages = (data.query && data.query.pages) ? Object.values(data.query.pages) : [];
-
-    // Filter out generic articles or the main city page
-    const filtered = pages.filter(p => {
-      const t = p.title.toLowerCase();
-      const c = cityName.toLowerCase();
-      return !t.includes('list of') && !t.includes('history of') && !t.includes('demographics') && t !== c && p.extract && p.extract.length > 30;
-    }).slice(0, 5);
-
-    if(!filtered.length){
-      content.innerHTML = `<div class="no-acts-txt" style="margin-top:30px">Inga sevärdheter hittades för ${cityName}.</div>`;
-      return;
-    }
-
-    let html = '';
-    filtered.forEach(p => {
-      const imgUrl = (p.thumbnail && p.thumbnail.source) ? p.thumbnail.source : 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80';
-      const extract = p.extract ? p.extract.substring(0, 180) + '…' : '';
-      
-      html += `
-        <div class="sug-hero-card">
-          <div class="sug-hero-img-wrap">
-            <img class="sug-hero-img" src="${imgUrl}" alt="${p.title}" />
-            <span class="sug-hero-badge">Sevärdhet</span>
-          </div>
-          <div class="sug-hero-body">
-            <div class="sug-hero-title">${p.title}</div>
-            <div class="sug-hero-desc">${extract}</div>
-            <button class="btn-sug-hero-save" data-sugtitle="${p.title}" data-city="${cityName}">
-              + Spara till rutt
-            </button>
-          </div>
-        </div>
-      `;
-    });
-    content.innerHTML = html;
-  }).catch(() => {
-    content.innerHTML = `<div class="no-acts-txt" style="margin-top:30px">Kunde inte hämta förslag för ${cityName}.</div>`;
-  });
-}
-
-function saveSugToCity(title, cityName, btnEl){
-  if(!state || !state.stops) return;
-  let stop = state.stops.find(s => s.city.toLowerCase().trim() === cityName.toLowerCase().trim());
-  if(!stop) return;
-
-  if(!stop.activities) stop.activities = [];
-  stop.activities.push({
-    id: Date.now().toString(),
-    text: title,
-    type: 'sevardhet'
-  });
-
-  save();
-  renderCities();
-
-  if(btnEl){
-    btnEl.textContent = 'Sparad till rutt! ✓';
-    btnEl.classList.add('saved');
-    btnEl.disabled = true;
-  }
-}
-
-/* Event Delegation for Sug City Pills & Save buttons */
-document.addEventListener('click', function(e){
-  const pill = e.target.closest('.sug-city-pill');
-  if(pill){
-    selectedSugCity = pill.getAttribute('data-sugcity');
-    renderSugTab();
-    return;
-  }
-  const saveBtn = e.target.closest('.btn-sug-hero-save');
-  if(saveBtn){
-    const title = saveBtn.getAttribute('data-sugtitle');
-    const city = saveBtn.getAttribute('data-city');
-    saveSugToCity(title, city, saveBtn);
-    return;
-  }
-});
 
 /* ---- UTILS ---- */
 function fmtDate(str){if(!str)return '\u2013';return new Date(str+'T12:00:00').toLocaleDateString('sv-SE',{day:'numeric',month:'short'});}
