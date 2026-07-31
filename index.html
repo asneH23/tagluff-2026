@@ -86,6 +86,13 @@
     .btn-add-act:active{background:rgba(255,255,255,0.12)}
     .btn-del-city{width:100%;margin-top:24px;padding:13px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r-sm);color:#EF4444;font-size:14px;font-weight:600;font-family:var(--font);cursor:pointer;transition:background .15s}
     .btn-del-city:active{background:rgba(239,68,68,0.18)}
+    .img-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+    .img-thumb-wrap{position:relative;width:90px;height:90px;border-radius:10px;overflow:hidden}
+    .img-thumb{width:100%;height:100%;object-fit:cover;display:block}
+    .img-del{position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.65);border:none;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;padding:0;line-height:1}
+    .btn-add-img{display:flex;align-items:center;justify-content:center;width:100%;padding:11px;background:var(--s2);border:1.5px dashed var(--b2);border-radius:var(--r-sm);color:var(--t3);font-size:13px;font-weight:500;font-family:var(--font);cursor:pointer;margin-top:2px;transition:background .15s}
+    .btn-add-img:active{background:rgba(255,255,255,0.08)}
+    .img-uploading{font-size:12px;color:var(--t3);padding:4px 0}
     .date-edit-row{display:flex;gap:10px;margin:14px 0 4px}
     .date-edit-grp{flex:1;display:flex;flex-direction:column;gap:5px}
     .date-inp{color-scheme:dark}
@@ -178,17 +185,6 @@
     <div id="stops-list"></div>
   </div>
 
-  <!-- CHECKLIST -->
-  <div id="screen-check" class="screen">
-    <div class="topbar">
-      <div class="topbar-row">
-        <h1>Checklista</h1>
-        <span id="check-count" style="font-size:12px;color:var(--t3);font-weight:500"></span>
-      </div>
-    </div>
-    <div class="progress-track"><div class="progress-fill" id="check-bar" style="width:0%"></div></div>
-    <div id="checklist"></div>
-  </div>
 
   <nav class="bottom-nav">
     <button class="nav-btn active" id="nav-cities" onclick="goTo('cities')">
@@ -210,15 +206,7 @@
       </div>
       <span class="nav-lbl">Karta</span>
     </button>
-    <button class="nav-btn" id="nav-check" onclick="goTo('check')">
-      <div class="nav-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="9 11 12 14 22 4"/>
-          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-        </svg>
-      </div>
-      <span class="nav-lbl">Lista</span>
-    </button>
+
   </nav>
 </div>
 
@@ -248,21 +236,11 @@
   </div>
 </div>
 
-<!-- MODAL: add checklist -->
-<div class="overlay" id="modal-check">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">Ny uppgift</div>
-    <div class="form-grp"><label class="form-lbl">Uppgift</label><input class="finput" id="in-check" placeholder="t.ex. Köp Eurail-kort" autocomplete="off"/></div>
-    <div class="form-grp"><label class="form-lbl">Kategori</label><select class="finput" id="in-cat"><option>Före resan</option><option>Packlista</option><option>Under resan</option></select></div>
-    <button class="btn-main" onclick="addCheck()">Lägg till</button>
-    <button class="btn-cancel" onclick="closeModal('modal-check')">Avbryt</button>
-  </div>
-</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script>
 firebase.initializeApp({
   apiKey:'AIzaSyCS7frMIpfvfO29EWmUXuhD2tMmhLenKCA',
@@ -272,21 +250,11 @@ firebase.initializeApp({
   messagingSenderId:'559457911138',
   appId:'1:559457911138:web:2bbfd432ff2cfaf8572c3b'
 });
-const db=firebase.firestore(),tripRef=db.collection('trips').doc('tagluff2026');
+const db=firebase.firestore(), tripRef=db.collection('trips').doc('tagluff2026');
+const storage=firebase.storage();
 
 const DEFAULTS={
-  stops:[{id:'sto',city:'Stockholm',from:'2026-08-02',to:'2026-08-02',lat:59.3293,lng:18.0686,activities:[],isHome:true,notes:''}],
-  checklist:[
-    {id:'c1',text:'Köp Eurail-kort',cat:'Före resan',done:false},
-    {id:'c2',text:'Ladda ner offline-kartor',cat:'Före resan',done:false},
-    {id:'c3',text:'Bokningsnummer på ett ställe',cat:'Före resan',done:false},
-    {id:'c4',text:'Kolla EU-sjukkort (EHIC)',cat:'Före resan',done:false},
-    {id:'c5',text:'Pass',cat:'Packlista',done:false},
-    {id:'c6',text:'Laddare + universaladapter',cat:'Packlista',done:false},
-    {id:'c7',text:'Powerbank',cat:'Packlista',done:false},
-    {id:'c8',text:'Regnjacka',cat:'Packlista',done:false},
-    {id:'c9',text:'Kontanter (euro)',cat:'Packlista',done:false},
-  ]
+  stops:[{id:'sto',city:'Stockholm',from:'2026-08-02',to:'2026-08-02',lat:59.3293,lng:18.0686,activities:[],isHome:true,notes:'',images:[]}]
 };
 
 const ACCENTS=[
@@ -300,11 +268,11 @@ const ACCENTS=[
 ];
 
 const ACT_LABELS={boende:'Boende',mat:'Mat',aktivitet:'Aktivitet',transport:'Transport',
-  'sevärdhet':'Sevärdhet',sevardhet:'Sevärdhet','nöje':'Nöje',noje:'Nöje',tips:'Tips'};
+  'sev\u00e4rdhet':'Sev\u00e4rdhet',sevardhet:'Sev\u00e4rdhet','n\u00f6je':'N\u00f6je',noje:'N\u00f6je',tips:'Tips'};
 
 let state=null,mapInst=null,mapLayers=[],currentTab='cities',saveTimer=null,currentDetailStopId=null,notesTimer=null;
 
-// OFFLINE-FIRST: render immediately from cache, sync Firebase in background
+// OFFLINE-FIRST: render immediately from cache
 try { state=JSON.parse(localStorage.getItem('tg26')||'null')||JSON.parse(JSON.stringify(DEFAULTS)); }
 catch(e){ state=JSON.parse(JSON.stringify(DEFAULTS)); }
 
@@ -314,17 +282,14 @@ function setSync(s){
   t.textContent=s==='online'?'Synkad':s==='offline'?'Offline':'Synkar';
 }
 
-// Connect Firebase — update state when data arrives
 tripRef.onSnapshot(function(snap){
   state=snap.exists?snap.data():JSON.parse(JSON.stringify(DEFAULTS));
   if(!snap.exists)tripRef.set(DEFAULTS);
   setSync('online');
   renderCities();
   if(mapInst)renderMap();
-  if(currentTab==='check')renderChecklist();
 }, function(err){
   setSync('offline');
-  // Keep using the already-loaded local state
 });
 
 function save(){
@@ -344,19 +309,16 @@ function goTo(tab){
   currentTab=tab;
   document.getElementById('fab').style.display='flex';
   if(tab==='map'){setTimeout(initMap,80);if(state)renderMap();}
-  if(tab==='check'&&state)renderChecklist();
   if(tab==='cities'&&state)renderCities();
 }
 
 function fabAction(){
-  if(currentTab==='cities'||currentTab==='map')openModal('modal-add-city');
-  if(currentTab==='check')openModal('modal-check');
+  openModal('modal-add-city');
 }
 
 function refreshTab(){
   if(currentTab==='cities')renderCities();
   if(currentTab==='map'&&mapInst)renderMap();
-  if(currentTab==='check')renderChecklist();
 }
 
 function openModal(id){document.getElementById(id).classList.add('open');}
@@ -377,12 +339,11 @@ function getAccentIdx(stopId){
 
 /* ---- CITIES ---- */
 function renderCities(){
-  updateCountdown();
   if(!state)return;
   const el=document.getElementById('cities-list');
   const stops=state.stops||[];
   if(!stops.length){
-    el.innerHTML=emptyH('Inga städer planerade','Tryck + för att lägga till din första stad');
+    el.innerHTML=emptyH('Inga st\u00e4der planerade','Tryck + f\u00f6r att l\u00e4gga till din f\u00f6rsta stad');
     return;
   }
   let html='', nh=0;
@@ -391,7 +352,11 @@ function renderCities(){
     const n=s.isHome?0:++nh;
     const acc=ACCENTS[n===0?0:((n-1)%(ACCENTS.length-1))+1];
     const actCount=(s.activities||[]).length;
-    const actsText=actCount===0?'Inga aktiviteter':actCount+(actCount===1?' aktivitet':' aktiviteter');
+    const imgCount=(s.images||[]).length;
+    const metaParts=[];
+    if(actCount)metaParts.push(actCount+(actCount===1?' aktivitet':' aktiviteter'));
+    if(imgCount)metaParts.push(imgCount+(imgCount===1?' bild':' bilder'));
+    const metaText=metaParts.length?metaParts.join(' \u00b7 '):'Tryck f\u00f6r detaljer';
     html+='<div class="city-card" data-id="'+s.id+'">'
       +'<div class="city-card-accent" style="background:'+acc.c+'"></div>'
       +'<div class="city-card-body">'
@@ -400,7 +365,7 @@ function renderCities(){
           +'<span class="city-card-badge" style="color:'+acc.c+';background:'+acc.bg+';border-color:'+acc.bd+'">'+(s.isHome?'START':'STOPP '+n)+'</span>'
         +'</div>'
         +(s.isHome?'':'<div class="city-card-dates">'+fmtDate(s.from)+' \u2014 '+fmtDate(s.to)+'</div>')
-        +'<div class="city-card-meta">'+actsText+'</div>'
+        +'<div class="city-card-meta">'+metaText+'</div>'
       +'</div>'
       +'<div class="city-card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>'
       +'</div>';
@@ -431,36 +396,47 @@ function buildDetailContent(stop){
       +'<button class="act-del" data-id="'+a.id+'">'+xSVG(12)+'</button>'
       +'</div>';
   }
+  const imgs=stop.images||[];
+  let imgsHtml=imgs.length===0?'<div class="no-acts-txt">Inga bilder</div>':'<div class="img-grid">';
+  for(var j=0;j<imgs.length;j++){
+    imgsHtml+='<div class="img-thumb-wrap"><img class="img-thumb" src="'+imgs[j]+'"/><button class="img-del" data-url="'+imgs[j]+'">'+xSVG(11)+'</button></div>';
+  }
+  if(imgs.length)imgsHtml+='</div>';
+
   document.getElementById('city-detail-content').innerHTML=
     '<div class="city-detail-header">'
       +'<div>'
         +'<div class="city-detail-name">'+stop.city+'</div>'
-        +(stop.isHome?'':'<div class="city-detail-date">'+fmtDate(stop.from)+' — '+fmtDate(stop.to)+'</div>')
+        +(stop.isHome?'':'<div class="city-detail-date">'+fmtDate(stop.from)+' \u2014 '+fmtDate(stop.to)+'</div>')
       +'</div>'
       +'<span class="city-card-badge" style="color:'+acc.c+';background:'+acc.bg+';border-color:'+acc.bd+'">'+(stop.isHome?'START':'STOPP '+n)+'</span>'
     +'</div>'
-    +(stop.isHome?'':'<div class="date-edit-row"><div class="date-edit-grp"><label class="form-lbl">Ankomst</label><input type="date" class="finput date-inp" id="detail-from" value="'+(stop.from||'')+'" /></div><div class="date-edit-grp"><label class="form-lbl">Avresa</label><input type="date" class="finput date-inp" id="detail-to" value="'+(stop.to||'')+'" /></div></div>')
+    +(stop.isHome?'':'<div class="date-edit-row"><div class="date-edit-grp"><label class="form-lbl">Ankomst</label><input type="date" class="finput date-inp" id="detail-from" value="'+(stop.from||'')+'"/></div><div class="date-edit-grp"><label class="form-lbl">Avresa</label><input type="date" class="finput date-inp" id="detail-to" value="'+(stop.to||'')+'"/></div></div>')
     +'<div class="sec" style="margin:20px 0 10px"><div class="sec-lbl">Anteckningar</div><div class="sec-line"></div></div>'
     +'<textarea class="notes-area" id="detail-notes" placeholder="Tips, adresser, bokningsnummer...">'+(stop.notes||'')+'</textarea>'
+    +'<div class="sec" style="margin:20px 0 10px"><div class="sec-lbl">Bilder</div><div class="sec-line"></div></div>'
+    +'<div id="detail-imgs">'+imgsHtml+'</div>'
+    +'<label class="btn-add-img" for="img-inp">+ L\u00e4gg till bild</label>'
+    +'<input type="file" id="img-inp" accept="image/*" style="display:none"/>'
     +'<div class="sec" style="margin:20px 0 10px"><div class="sec-lbl">Aktiviteter</div><div class="sec-line"></div></div>'
     +'<div id="detail-acts-list">'+actsHtml+'</div>'
-    +'<div class="sec" style="margin:20px 0 10px"><div class="sec-lbl">Lägg till aktivitet</div><div class="sec-line"></div></div>'
+    +'<div class="sec" style="margin:20px 0 10px"><div class="sec-lbl">L\u00e4gg till aktivitet</div><div class="sec-line"></div></div>'
     +'<div class="add-act-section">'
       +'<select class="finput" id="detail-act-type">'
         +'<option value="boende">Boende</option>'
         +'<option value="mat">Mat &amp; dryck</option>'
         +'<option value="aktivitet">Aktivitet</option>'
         +'<option value="transport">Transport</option>'
-        +'<option value="sevardhet">Sevärdhet</option>'
-        +'<option value="noje">Nöje</option>'
+        +'<option value="sevardhet">Sev\u00e4rdhet</option>'
+        +'<option value="noje">N\u00f6je</option>'
         +'<option value="tips">Tips</option>'
       +'</select>'
       +'<input class="finput" id="detail-act-text" placeholder="Beskrivning..." style="margin-top:0"/>'
-      +'<button class="btn-add-act" id="btn-add-act">Lägg till</button>'
+      +'<button class="btn-add-act" id="btn-add-act">L\u00e4gg till</button>'
     +'</div>'
     +(stop.isHome?'':'<button class="btn-del-city" id="btn-del-city">Ta bort stad</button>');
 
-  // Notes: save on input (debounced)
+  // Notes listener
   document.getElementById('detail-notes').addEventListener('input',function(){
     const val=this.value;
     clearTimeout(notesTimer);
@@ -469,7 +445,7 @@ function buildDetailContent(stop){
       if(s){s.notes=val;save();}
     },1500);
   });
-  // Dates: save on change and re-render card
+  // Date listeners
   var fromEl=document.getElementById('detail-from');
   var toEl=document.getElementById('detail-to');
   function saveDates(){
@@ -481,6 +457,56 @@ function buildDetailContent(stop){
   }
   if(fromEl)fromEl.addEventListener('change',saveDates);
   if(toEl)toEl.addEventListener('change',saveDates);
+  // Image file input listener
+  var imgInp=document.getElementById('img-inp');
+  if(imgInp)imgInp.addEventListener('change',function(){
+    if(this.files&&this.files[0])uploadImage(this.files[0]);
+    this.value='';
+  });
+}
+
+function refreshDetailImgs(){
+  const stop=(state.stops||[]).find(function(s){return s.id===currentDetailStopId;});
+  if(!stop)return;
+  const imgs=stop.images||[];
+  const el=document.getElementById('detail-imgs');
+  if(!el)return;
+  if(!imgs.length){el.innerHTML='<div class="no-acts-txt">Inga bilder</div>';return;}
+  let html='<div class="img-grid">';
+  for(var j=0;j<imgs.length;j++){
+    html+='<div class="img-thumb-wrap"><img class="img-thumb" src="'+imgs[j]+'"/><button class="img-del" data-url="'+imgs[j]+'">'+xSVG(11)+'</button></div>';
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+function uploadImage(file){
+  if(!file||!currentDetailStopId)return;
+  const el=document.getElementById('detail-imgs');
+  if(el){var note=document.createElement('div');note.className='img-uploading';note.textContent='Laddar upp...';el.appendChild(note);}
+  const path='cities/'+currentDetailStopId+'/'+Date.now()+'_'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+  const ref=storage.ref(path);
+  ref.put(file).then(function(){
+    return ref.getDownloadURL();
+  }).then(function(url){
+    const stop=(state.stops||[]).find(function(s){return s.id===currentDetailStopId;});
+    if(stop){
+      if(!stop.images)stop.images=[];
+      stop.images.push(url);
+      save(); refreshDetailImgs();
+    }
+  }).catch(function(err){
+    if(el){var errNote=document.createElement('div');errNote.className='img-uploading';errNote.textContent='Misslyckades: '+err.message;el.appendChild(errNote);}
+  });
+}
+
+function deleteImage(url){
+  const stop=(state.stops||[]).find(function(s){return s.id===currentDetailStopId;});
+  if(stop){
+    stop.images=(stop.images||[]).filter(function(u){return u!==url;});
+    save(); refreshDetailImgs(); renderCities();
+    try{storage.refFromURL(url).delete();}catch(e){}
+  }
 }
 
 function refreshDetailActsList(){
@@ -534,8 +560,8 @@ async function geocodeAndAdd(){
   const to=document.getElementById('in-to').value;
   if(!city){document.getElementById('geo-hint').textContent='Ange en stad.';return;}
   const btn=document.getElementById('city-add-btn');
-  btn.textContent='Söker…'; btn.disabled=true;
-  document.getElementById('geo-hint').textContent='Söker koordinater…';
+  btn.textContent='S\u00f6ker\u2026'; btn.disabled=true;
+  document.getElementById('geo-hint').textContent='S\u00f6ker koordinater\u2026';
   let lat=null,lng=null;
   try{
     const r=await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(city)+'&format=json&limit=1');
@@ -544,8 +570,8 @@ async function geocodeAndAdd(){
     document.getElementById('geo-hint').textContent=lat?'Hittad.':'Hittades inte.';
   }catch(e){document.getElementById('geo-hint').textContent='Offline.';}
   if(!state.stops)state.stops=[];
-  state.stops.push({id:Date.now().toString(),city:city,from:from,to:to,lat:lat,lng:lng,activities:[],notes:''});
-  save(); btn.textContent='Lägg till'; btn.disabled=false;
+  state.stops.push({id:Date.now().toString(),city:city,from:from,to:to,lat:lat,lng:lng,activities:[],notes:'',images:[]});
+  save(); btn.textContent='L\u00e4gg till'; btn.disabled=false;
   setTimeout(function(){
     closeModal('modal-add-city');
     ['in-city','in-from','in-to'].forEach(function(id){document.getElementById(id).value='';});
@@ -582,7 +608,7 @@ function renderMap(){
     if(s.lat==null)return;
     const col=s.isHome?'#6366F1':'#D4A853';
     const m=L.marker([s.lat,s.lng],{icon:mkPin(col)}).addTo(mapInst)
-      .bindPopup('<strong>'+s.city+'</strong><br><small>'+fmtDate(s.from)+' — '+fmtDate(s.to)+'</small>');
+      .bindPopup('<strong>'+s.city+'</strong><br><small>'+fmtDate(s.from)+' \u2014 '+fmtDate(s.to)+'</small>');
     mapLayers.push(m); coords.push([s.lat,s.lng]);
   });
   if(coords.length>1){
@@ -593,7 +619,7 @@ function renderMap(){
   if(cEl)cEl.textContent=stops.length+' stopp';
   const el=document.getElementById('stops-list');
   if(!stops.length){
-    el.innerHTML=emptyH('Inga städer','Tryck + för att lägga till en stad');
+    el.innerHTML=emptyH('Inga st\u00e4der','Tryck + f\u00f6r att l\u00e4gga till en stad');
     return;
   }
   let nh=0, html='';
@@ -602,56 +628,16 @@ function renderMap(){
     const acc=ACCENTS[n===0?0:((n-1)%(ACCENTS.length-1))+1];
     html+='<div class="stop-chip">'
       +'<div class="stop-chip-dot" style="background:'+acc.c+';box-shadow:0 0 6px '+acc.bg+'"></div>'
-      +'<div class="stop-chip-info"><div class="stop-chip-name">'+s.city+'</div><div class="stop-chip-date">'+fmtDate(s.from)+' — '+fmtDate(s.to)+'</div></div>'
+      +'<div class="stop-chip-info"><div class="stop-chip-name">'+s.city+'</div><div class="stop-chip-date">'+fmtDate(s.from)+' \u2014 '+fmtDate(s.to)+'</div></div>'
       +(s.isHome?'':'<button class="stop-chip-del" data-id="'+s.id+'">'+xSVG(13)+'</button>')
       +'</div>';
   });
   el.innerHTML=html;
 }
 
-/* ---- CHECKLIST ---- */
-function renderChecklist(){
-  if(!state)return;
-  const cl=state.checklist||[], done=cl.filter(function(i){return i.done;}).length, total=cl.length;
-  const pct=total?Math.round(done/total*100):0;
-  document.getElementById('check-count').textContent=done+' / '+total;
-  document.getElementById('check-bar').style.width=pct+'%';
-  const el=document.getElementById('checklist');
-  if(!total){el.innerHTML=emptyH('Listan är tom','Tryck + för att lägga till en uppgift');return;}
-  const cats=[...new Set(cl.map(function(i){return i.cat;}))];
-  let html='';
-  cats.forEach(function(cat){
-    html+='<div class="sec"><div class="sec-lbl">'+cat+'</div><div class="sec-line"></div></div>';
-    cl.filter(function(i){return i.cat===cat;}).forEach(function(item){
-      html+='<div class="check-item'+(item.done?' done':'')+'" data-id="'+item.id+'">'
-        +'<div class="check-circle">'+(item.done?'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#080918" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>':'')+'</div>'
-        +'<span class="check-txt">'+item.text+'</span>'
-        +'<button class="check-del" data-id="'+item.id+'">'+xSVG(13)+'</button>'
-        +'</div>';
-    });
-  });
-  el.innerHTML=html;
-}
-
-function addCheck(){
-  const text=document.getElementById('in-check').value.trim();
-  const cat=document.getElementById('in-cat').value;
-  if(!text)return; if(!state.checklist)state.checklist=[];
-  state.checklist.push({id:Date.now().toString(),text:text,cat:cat,done:false});
-  save(); closeModal('modal-check'); document.getElementById('in-check').value=''; renderChecklist();
-}
-function toggleCheck(id){
-  const item=(state.checklist||[]).find(function(i){return i.id===id;});
-  if(item){item.done=!item.done; save(); renderChecklist();}
-}
-function deleteCheck(id){
-  state.checklist=(state.checklist||[]).filter(function(i){return i.id!==id;});
-  save(); renderChecklist();
-}
-
 /* ---- UTILS ---- */
 function fmtDate(str){
-  if(!str)return '–';
+  if(!str)return '\u2013';
   return new Date(str+'T12:00:00').toLocaleDateString('sv-SE',{day:'numeric',month:'short'});
 }
 function updateCountdown(){}
@@ -662,7 +648,7 @@ function emptyH(t,d){
   return '<div class="empty"><div class="empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="empty-title">'+t+'</div><div class="empty-desc">'+d+'</div></div>';
 }
 
-/* ---- EVENT DELEGATION (no inline onclick in generated HTML) ---- */
+/* ---- EVENT DELEGATION ---- */
 document.getElementById('cities-list').addEventListener('click',function(e){
   var card=e.target.closest('.city-card');
   if(card)openCityDetail(card.getAttribute('data-id'));
@@ -674,22 +660,17 @@ document.getElementById('stops-list').addEventListener('click',function(e){
 document.getElementById('modal-city-detail').addEventListener('click',function(e){
   var del=e.target.closest('.act-del');
   if(del){deleteActFromDetail(del.getAttribute('data-id'));return;}
+  var imgDel=e.target.closest('.img-del');
+  if(imgDel){deleteImage(imgDel.getAttribute('data-url'));return;}
   var addBtn=e.target.closest('#btn-add-act');
   if(addBtn){addActFromDetail();return;}
   var delCity=e.target.closest('#btn-del-city');
   if(delCity){removeStop(currentDetailStopId);closeModal('modal-city-detail');return;}
 });
-document.getElementById('checklist').addEventListener('click',function(e){
-  var del=e.target.closest('.check-del');
-  if(del){e.stopPropagation();deleteCheck(del.getAttribute('data-id'));return;}
-  var item=e.target.closest('.check-item');
-  if(item)toggleCheck(item.getAttribute('data-id'));
-});
 
 /* ---- BOOT ---- */
 setSync('syncing');
 refreshTab();
-updateCountdown();
 setInterval(updateCountdown,60000);
 </script>
 </body>
