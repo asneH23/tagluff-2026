@@ -638,7 +638,8 @@ function renderMap(){
   stops.forEach(function(s){
     if(s.lat==null)return;
     const col=s.isHome?'#6366F1':'#D4A853';
-    const m=L.marker([s.lat,s.lng],{icon:mkPin(col)}).addTo(mapInst).bindPopup('<strong>'+s.city+'</strong><br><small>'+fmtDate(s.from)+' \u2014 '+fmtDate(s.to)+'</small>');
+    const popupContent='<strong>'+s.city+'</strong>'+(s.isHome?'':'<br><small>'+fmtDate(s.from)+' \u2014 '+fmtDate(s.to)+'</small>');
+    const m=L.marker([s.lat,s.lng],{icon:mkPin(col)}).addTo(mapInst).bindPopup(popupContent);
     mapLayers.push(m);coords.push([s.lat,s.lng]);
   });
   if(coords.length>1){const line=L.polyline(coords,{color:'#D4A853',weight:2,dashArray:'5 9',opacity:.55}).addTo(mapInst);mapLayers.push(line);mapInst.fitBounds(line.getBounds(),{padding:[32,32]});}
@@ -649,7 +650,7 @@ function renderMap(){
   stops.forEach(function(s){
     const n=s.isHome?0:++nh;
     const acc=ACCENTS[n===0?0:((n-1)%(ACCENTS.length-1))+1];
-    html+='<div class="stop-chip"><div class="stop-chip-dot" style="background:'+acc.c+';box-shadow:0 0 6px '+acc.bg+'"></div><div class="stop-chip-info"><div class="stop-chip-name">'+s.city+'</div><div class="stop-chip-date">'+fmtDate(s.from)+' \u2014 '+fmtDate(s.to)+'</div></div>'+(s.isHome?'':'<button class="stop-chip-del" data-id="'+s.id+'">'+xSVG(13)+'</button>')+'</div>';
+    html+='<div class="stop-chip"><div class="stop-chip-dot" style="background:'+acc.c+';box-shadow:0 0 6px '+acc.bg+'"></div><div class="stop-chip-info"><div class="stop-chip-name">'+s.city+'</div>'+(s.isHome?'':'<div class="stop-chip-date">'+fmtDate(s.from)+' \u2014 '+fmtDate(s.to)+'</div>')+'</div>'+(s.isHome?'':'<button class="stop-chip-del" data-id="'+s.id+'">'+xSVG(13)+'</button>')+'</div>';
   });
   el.innerHTML=html;
 }
